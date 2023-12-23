@@ -42,6 +42,10 @@ public class Main {
         System.out.print("aaaaaa: ");
         phoneBook.get("aaaaaa").forEach(phone -> System.out.print(phone + " "));
         System.out.println();
+
+        System.out.print("unknown: ");
+        phoneBook.get("unknown").forEach(phone -> System.out.print(phone + " "));
+        System.out.println();
     }
 
     public static void main(String[] args) {
