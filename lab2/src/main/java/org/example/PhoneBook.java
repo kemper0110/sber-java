@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -18,26 +19,14 @@ public class PhoneBook {
     private static class PhoneNode {
         private String surname;
         private String phone;
-        protected PhoneNode next;
     }
-    private PhoneNode list = null;
+    private final ArrayList<PhoneNode> list = new ArrayList<>();
     public void add(String surname, String phone) {
-        list = new PhoneNode(surname, phone, list);
+        list.add(new PhoneNode(surname, phone));
     }
     public Stream<String> get(String surname) {
-        final var spliterator = new Spliterators.AbstractSpliterator<String>(Long.MAX_VALUE, ORDERED){
-            PhoneNode head = list;
-            @Override
-            public boolean tryAdvance(Consumer<? super String> action) {
-                while (head != null && !head.surname.equals(surname))
-                    head = head.next;
-                if (head == null)
-                    return false;
-                action.accept(head.phone);
-                head = head.next;
-                return true;
-            }
-        };
-        return StreamSupport.stream(spliterator, false);
+        return list.stream()
+                .filter(node -> node.surname.equals(surname))
+                .map(node -> node.phone);
     }
 }
