@@ -1,23 +1,15 @@
 package org.example;
 
-import lombok.AllArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PhoneBook {
-    @AllArgsConstructor
-    private static class PhoneNode {
-        private String surname;
-        private String phone;
-    }
-    private final ArrayList<PhoneNode> list = new ArrayList<>();
+    record PhoneNode(String phone, PhoneNode next) { }
+    private final Map<String, PhoneNode> map = new HashMap<>();
     public void add(String surname, String phone) {
-        list.add(new PhoneNode(surname, phone));
+        map.put(surname, new PhoneNode(phone, map.get(surname)));
     }
-    public Stream<String> get(String surname) {
-        return list.stream()
-                .filter(node -> node.surname.equals(surname))
-                .map(node -> node.phone);
+    public PhoneNode get(String surname) {
+        return map.get(surname);
     }
 }
