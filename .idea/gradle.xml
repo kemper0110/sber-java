@@ -5,10 +5,14 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="gradleHome" value="" />
+        <option name="gradleJvm" value="21" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/lab1" />
+            <option value="$PROJECT_DIR$/lab2" />
+            <option value="$PROJECT_DIR$/lab3" />
+            <option value="$PROJECT_DIR$/live" />
           </set>
         </option>
       </GradleProjectSettings>
