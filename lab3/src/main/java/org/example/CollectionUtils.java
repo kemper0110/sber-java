@@ -2,7 +2,9 @@ package org.example;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 // Producer Extends
 // Consumer Super
@@ -32,7 +34,7 @@ public class CollectionUtils {
     }
 
     public static <T> boolean containsAll(List<? super T> c1, List<? extends T> c2) {
-        return c1.containsAll(c2);
+        return new HashSet<>(c1).containsAll(c2);
     }
 
     public static <T> boolean containsAny(List<? super T> c1, List<? extends T> c2) {
@@ -43,14 +45,14 @@ public class CollectionUtils {
     // Возвращает лист, содержащий элементы из входного листа в диапазоне от min до max.
     // Элементы сравнивать через Comparable.
     // Прмер range(Arrays.asList(8,1,3,5,6, 4), 3, 6) вернет {3,4,5,6}
-    public static <T extends Comparable<T>> List<T> range(List<T> list, T min, T max) {
+    public static <T extends Comparable<T>> List<? extends T> range(List<? extends T> list, T min, T max) {
         return list.stream().filter(e -> e.compareTo(min) >= 0 && e.compareTo(max) <= 0).toList();
     }
 
     // Возвращает лист, содержащий элементы из входного листа в диапазоне от min до max.
     // Элементы сравнивать через Comparable.
     // Прмер range(Arrays.asList(8,1,3,5,6, 4), 3, 6) вернет {3,4,5,6}
-    public static <T extends Comparable<T>> List<T> range(List<T> list, T min, T max, Comparator<T> comparator) {
+    public static <T> List<? extends T> range(List<? extends T> list, T min, T max, Comparator<? super T> comparator) {
         return list.stream().filter(e -> comparator.compare(e, min) >= 0 && comparator.compare(e, max) <= 0).toList();
     }
 }

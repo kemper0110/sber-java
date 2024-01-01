@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +9,7 @@ public class CountMapImpl<K> implements CountMap<K> {
 
     @Override
     public void add(K o) {
-        map.put(o, map.getOrDefault(o, 0) + 1);
+        map.merge(o, 1, Integer::sum);
     }
 
     @Override
@@ -18,7 +19,13 @@ public class CountMapImpl<K> implements CountMap<K> {
 
     @Override
     public int remove(K o) {
-        return map.remove(o);
+        final var value = getCount(o);
+        if(value != 0)
+            if(value > 1)
+                map.merge(o, -1, Integer::sum);
+            else
+                map.remove(o);
+        return value;
     }
 
     @Override
@@ -33,7 +40,7 @@ public class CountMapImpl<K> implements CountMap<K> {
 
     @Override
     public Map<K, Integer> toMap() {
-        return new HashMap<>(map);
+        return Collections.unmodifiableMap(map);
     }
 
     @Override
