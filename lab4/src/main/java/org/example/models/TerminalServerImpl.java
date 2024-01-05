@@ -7,8 +7,8 @@ public class TerminalServerImpl implements TerminalServer {
     private long account = 0L;
     private final TerminalServerLock lock;
 
-    public TerminalServerImpl() {
-        this.lock = new TerminalServerLockImpl("1234");
+    public TerminalServerImpl(TerminalServerLock lock) {
+        this.lock = lock;
     }
 
     @Override

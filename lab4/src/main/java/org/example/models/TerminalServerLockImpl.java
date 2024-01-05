@@ -10,10 +10,12 @@ import java.util.Date;
 
 public class TerminalServerLockImpl implements TerminalServerLock {
     private final String pin;
+    private final int accountLockTimeSeconds;
     private LockState state = new TerminalLockedState();
 
-    public TerminalServerLockImpl(String pin) {
+    public TerminalServerLockImpl(String pin, int accountLockTimeSeconds) {
         this.pin = pin;
+        this.accountLockTimeSeconds = accountLockTimeSeconds;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class TerminalServerLockImpl implements TerminalServerLock {
             if (!pin.equals(TerminalServerLockImpl.this.pin)) {
                 if (++attempts >= 3) {
                     setState(new AccountLockedState());
-                    throw new AccountIsLockedException();
+                    throw new AccountIsLockedException(accountLockTimeSeconds);
                 }
                 return false;
             } else {
@@ -77,8 +79,6 @@ public class TerminalServerLockImpl implements TerminalServerLock {
 
     class AccountLockedState implements LockState {
         private final Date lockedAt = new Date();
-        private final static int lockTimeSeconds = 10;
-
         @Override
         public boolean unlock(String pin) throws LockException {
             access();
@@ -88,7 +88,7 @@ public class TerminalServerLockImpl implements TerminalServerLock {
         @Override
         public void access() throws LockException {
             final var elapsedSeconds = (new Date().getTime() - lockedAt.getTime()) / 1000;
-            if (elapsedSeconds > lockTimeSeconds) {
+            if (elapsedSeconds >= accountLockTimeSeconds) {
                 setState(new TerminalLockedState());
             } else {
                 throw new AccountIsLockedException((int)elapsedSeconds);
