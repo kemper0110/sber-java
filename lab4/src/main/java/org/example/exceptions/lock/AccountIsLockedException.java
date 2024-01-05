@@ -5,7 +5,7 @@ public class AccountIsLockedException extends LockException {
         super("Аккаунт заблокирован: повторите попытку ввода пин-кода через %d секунд".formatted(elapsed));
     }
     public AccountIsLockedException() {
-        super("Аккаунт заблокирован: повторите попытку ввода пин-кода через 10 секунд");
+        super();
     }
     public AccountIsLockedException(String message) {
         super(message);
