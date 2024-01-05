@@ -58,10 +58,17 @@ public class ConsoleTerminal {
                         case "unlock":
                             System.out.println("Вводите пин-код. Каждая цифра на новой строке.");
                             String pin = "";
-                            do {
-                                pin += scanner.nextLine();
-                                System.out.println("Введенный пин-код: " + pin);
-                            } while (!terminal.unlock(pin));
+                            while(true) {
+                                final var newPinCode = pin + scanner.nextLine();
+                                System.out.println("Введенный пин-код: " + newPinCode);
+                                try {
+                                    if(terminal.unlock(newPinCode))
+                                        break;
+                                    pin = newPinCode;
+                                } catch (PinValidationException e) {
+                                    System.out.println("Ошибка валидации пин-кода: " + e.getMessage());
+                                }
+                            }
                             System.out.println("Терминал успешно разблокирован!");
                             break;
                     }
@@ -72,8 +79,6 @@ public class ConsoleTerminal {
                 System.out.println(e.getMessage());
             } catch (NumberFormatException e) {
                 System.out.println("Число введено в неверном формате");
-            } catch (PinValidationException e) {
-                System.out.println("Ошибка валидации пин-кода: " + e.getMessage());
             } catch (Exception e) {
                 System.out.println("Внутренняя ошибка: наберите программиста");
             }
