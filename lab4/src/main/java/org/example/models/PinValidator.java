@@ -6,7 +6,7 @@ import org.example.exceptions.pin.PinValidationException;
 
 public class PinValidator {
     void validate(String pin) throws PinValidationException {
-        if(!pin.matches("^\\d+$"))
+        if(!pin.matches("^\\d*$"))
             throw new PinDigitsException();
         if(pin.length() > 4)
             throw new PinLengthException();
