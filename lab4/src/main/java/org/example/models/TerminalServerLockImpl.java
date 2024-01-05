@@ -20,13 +20,11 @@ public class TerminalServerLockImpl implements TerminalServerLock {
 
     @Override
     public boolean unlock(String pin) throws LockException {
-        System.out.println("unlocking with " + state.getClass().getName());
         return state.unlock(pin);
     }
 
     @Override
     public void access() throws LockException {
-        System.out.println("accessing with " + state.getClass().getName());
         state.access();
     }
 
