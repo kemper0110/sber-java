@@ -1,6 +1,6 @@
-package org.example.exceptions;
+package org.example.exceptions.account;
 
-public class NotEnoughMoneyException extends Exception {
+public class NotEnoughMoneyException extends MoneyException {
     public NotEnoughMoneyException() {
         super("У вас не хватает денег на счету");
     }

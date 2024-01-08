@@ -1,7 +1,8 @@
 package org.example.models;
 
+import org.example.exceptions.account.TerminalOperationException;
 import org.example.exceptions.lock.LockException;
-import org.example.exceptions.NotEnoughMoneyException;
+import org.example.exceptions.account.NotEnoughMoneyException;
 import org.example.exceptions.pin.PinValidationException;
 
 public class TerminalImpl implements Terminal {
@@ -12,17 +13,17 @@ public class TerminalImpl implements Terminal {
         this.pinValidator = new PinValidator();
     }
     @Override
-    public long get() throws LockException {
+    public long get() throws LockException, TerminalOperationException {
         return server.get();
     }
 
     @Override
-    public long put(long amount) throws LockException {
+    public long put(long amount) throws LockException, TerminalOperationException {
         return server.put(amount);
     }
 
     @Override
-    public long pull(long amount) throws NotEnoughMoneyException, LockException {
+    public long pull(long amount) throws LockException, TerminalOperationException {
         return server.pull(amount);
     }
 

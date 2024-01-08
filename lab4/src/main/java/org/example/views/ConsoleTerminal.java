@@ -1,11 +1,11 @@
 package org.example.views;
 
 import org.example.exceptions.lock.LockException;
-import org.example.exceptions.NotEnoughMoneyException;
+import org.example.exceptions.account.NotEnoughMoneyException;
+import org.example.exceptions.pin.PinMinLengthException;
 import org.example.exceptions.pin.PinValidationException;
 import org.example.models.Terminal;
 
-import java.io.IOException;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
@@ -62,14 +62,20 @@ public class ConsoleTerminal {
                                 final var newPinCode = pin + scanner.nextLine();
                                 System.out.println("Введенный пин-код: " + newPinCode);
                                 try {
-                                    if(terminal.unlock(newPinCode))
+                                    if(terminal.unlock(newPinCode)) {
+                                        System.out.println("Терминал успешно разблокирован!");
+                                    } else {
+                                        System.out.println("Пин-код неверный");
                                         break;
+                                    }
                                     pin = newPinCode;
+                                } catch (PinMinLengthException e) {
+                                    // wait for full length
                                 } catch (PinValidationException e) {
                                     System.out.println("Ошибка валидации пин-кода: " + e.getMessage());
+                                    break;
                                 }
                             }
-                            System.out.println("Терминал успешно разблокирован!");
                             break;
                     }
                 } else {

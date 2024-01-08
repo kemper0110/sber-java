@@ -1,7 +1,7 @@
 package org.example.models;
 
+import org.example.exceptions.account.*;
 import org.example.exceptions.lock.LockException;
-import org.example.exceptions.NotEnoughMoneyException;
 
 public class TerminalServerImpl implements TerminalServer {
     private long account = 0L;
@@ -18,14 +18,22 @@ public class TerminalServerImpl implements TerminalServer {
     }
 
     @Override
-    public long put(long amount) throws LockException {
+    public long put(long amount) throws LockException, TerminalOperationException {
         lock.access();
+        if(amount < 0)
+            throw new NegativeMoneyException();
+        if(amount % 100 != 0)
+            throw new NotDivisibleException();
         return account += amount;
     }
 
     @Override
-    public long pull(long amount) throws NotEnoughMoneyException, LockException {
+    public long pull(long amount) throws LockException, TerminalOperationException {
         lock.access();
+        if(amount < 0)
+            throw new NegativeMoneyException();
+        if(amount % 100 != 0)
+            throw new NotDivisibleException();
         if (account < amount)
             throw new NotEnoughMoneyException();
         return account -= amount;

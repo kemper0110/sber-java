@@ -1,6 +1,6 @@
 package org.example.models;
 
-import org.example.exceptions.NotEnoughMoneyException;
+import org.example.exceptions.account.NotEnoughMoneyException;
 import org.example.exceptions.lock.AccountIsLockedException;
 import org.example.exceptions.lock.TerminalIsLockedException;
 import org.junit.jupiter.api.Test;
