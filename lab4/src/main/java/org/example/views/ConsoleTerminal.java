@@ -36,33 +36,28 @@ public class ConsoleTerminal {
                     final var arg = Long.parseLong(consumerMatches.group(2));
 
                     switch (method) {
-                        case "put":
-                            System.out.println("Теперь у вас на счету: " + terminal.put(arg));
-                            break;
-                        case "pull":
+                        case "put" -> System.out.println("Теперь у вас на счету: " + terminal.put(arg));
+                        case "pull" -> {
                             try {
                                 System.out.println("Теперь у вас на счету: " + terminal.pull(arg));
                             } catch (NotEnoughMoneyException e) {
                                 System.out.println(e.getMessage());
                             }
-                            break;
-                        default:
-                            System.out.println("Неверное имя метода");
+                        }
+                        default -> System.out.println("Неверное имя метода");
                     }
                 } else if (actionMatches.find()) {
                     final var method = actionMatches.group(1);
                     switch (method) {
-                        case "get":
-                            System.out.println("У вас на счету: " + terminal.get());
-                            break;
-                        case "unlock":
+                        case "get" -> System.out.println("У вас на счету: " + terminal.get());
+                        case "unlock" -> {
                             System.out.println("Вводите пин-код. Каждая цифра на новой строке.");
                             String pin = "";
-                            while(true) {
+                            while (true) {
                                 final var newPinCode = pin + scanner.nextLine();
                                 System.out.println("Введенный пин-код: " + newPinCode);
                                 try {
-                                    if(terminal.unlock(newPinCode)) {
+                                    if (terminal.unlock(newPinCode)) {
                                         System.out.println("Терминал успешно разблокирован!");
                                     } else {
                                         System.out.println("Пин-код неверный");
@@ -76,7 +71,7 @@ public class ConsoleTerminal {
                                     break;
                                 }
                             }
-                            break;
+                        }
                     }
                 } else {
                     System.out.println("Действие в неверном формате");
