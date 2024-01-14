@@ -23,11 +23,13 @@ class TerminalImplTest {
 
         assertDoesNotThrow(() -> assertFalse(terminal.unlock("1233")));
         assertDoesNotThrow(() -> assertFalse(terminal.unlock("1233")));
-        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
-        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
-        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
 
+        // проверка блокировки аккаунта
+        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
+        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
+        assertThrowsExactly(AccountIsLockedException.class, () -> terminal.unlock("1233"));
         assertDoesNotThrow(() -> Thread.sleep(sleepTimeMilliseconds));
+
         assertDoesNotThrow(() -> assertTrue(terminal.unlock(pin)));
 
         assertDoesNotThrow(() -> {
