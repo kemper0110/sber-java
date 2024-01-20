@@ -5,31 +5,23 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.danil</groupId>
-        <artifactId>lab6</artifactId>
+        <artifactId>social-network</artifactId>
         <version>1.0</version>
     </parent>
 
-<!--  users  -->
-<!--  friends  -->
-
-<!--  problems: title, Difficulty  -->
-<!--  description(markdown)  -->
-<!--  languages: template, solution  -->
-<!--  test-cases  -->
-<!--  attempts  -->
-
-    <artifactId>social-network</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>user</module>
-        <module>friends</module>
-        <module>messages</module>
-    </modules>
+    <artifactId>user</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>RELEASE</version>
+        </dependency>
+    </dependencies>
 
 </project>
