@@ -44,7 +44,7 @@ class FriendshipServiceTest {
         when(userService.getCurrent()).thenReturn(new User(1L));
         when(friendshipRepository.getByUsers(1L, 2L)).thenReturn(new Friendship(new User(1L), new User(2L), new Date(), Friendship.Status.ACTIVE));
 
-        assertDoesNotThrow(() -> friendshipService.breakUp(new BreakUpRequest(new User(1L))));
+        assertDoesNotThrow(() -> friendshipService.breakUp(new BreakUpRequest(new User(2L))));
 
         verify(friendshipRepository, times(1)).deleteByUsers(1L, 2L);
     }
@@ -54,8 +54,8 @@ class FriendshipServiceTest {
         when(userService.getCurrent()).thenReturn(new User(1L));
         when(friendshipRepository.getByUsers(1L, 2L)).thenReturn(new Friendship(new User(1L), new User(2L), new Date(), Friendship.Status.REQUESTED));
 
-        assertDoesNotThrow(() -> friendshipService.breakUp(new BreakUpRequest(new User(1L))));
+        assertDoesNotThrow(() -> friendshipService.breakUp(new BreakUpRequest(new User(2L))));
 
-        verify(friendshipRepository, times(1)).save(any(Friendship.class));
+        verify(friendshipRepository, times(1)).deleteByUsers(1L, 2L);
     }
 }
