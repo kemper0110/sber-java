@@ -5,8 +5,9 @@ import lombok.*;
 @Getter
 @Setter
 @AllArgsConstructor
+@RequiredArgsConstructor
 public class User {
-    private Long id;
+    final private Long id;
 
     private String email;
     private String firstname;

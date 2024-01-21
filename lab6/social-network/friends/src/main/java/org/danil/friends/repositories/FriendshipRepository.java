@@ -7,7 +7,8 @@ import java.util.List;
 
 public interface FriendshipRepository {
     Friendship save(Friendship friendship);
-    void deleteByUsers(User first, User second);
+    void deleteByUsers(Long first, Long second);
     List<Friendship> getAll();
-    List<Friendship> getAllByUser(User user);
+    List<Friendship> getAllByUser(Long user);
+    Friendship getByUsers(Long user1, Long user2);
 }

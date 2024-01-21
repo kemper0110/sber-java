@@ -9,16 +9,8 @@
         <version>1.0</version>
     </parent>
 
-<!--  users  -->
-<!--  friends  -->
-
-<!--  problems: title, Difficulty  -->
-<!--  description(markdown)  -->
-<!--  languages: template, solution  -->
-<!--  test-cases  -->
-<!--  attempts  -->
-
     <artifactId>social-network</artifactId>
+
     <packaging>pom</packaging>
     <modules>
         <module>user</module>
@@ -31,5 +23,26 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>RELEASE</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.8.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>
