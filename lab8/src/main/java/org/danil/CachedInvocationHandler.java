@@ -18,11 +18,13 @@ public class CachedInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (!method.isAnnotationPresent(Cache.class)) return invoke(method, args);
 
-        if (!resultByArg.containsKey(key(method, args))) {
+        final var annotation = method.getAnnotation(Cache.class);
+        final var key = key(method, args, annotation.identityBy());
+        if (!resultByArg.containsKey(key)) {
             System.out.println("Delegation of " + method.getName());
-            resultByArg.put(key(method, args), invoke(method, args));
+            resultByArg.put(key, invoke(method, args));
         }
-        return resultByArg.get(key(method, args));
+        return resultByArg.get(key);
     }
 
     private Object invoke(Method method, Object[] args) throws Throwable {
@@ -35,10 +37,13 @@ public class CachedInvocationHandler implements InvocationHandler {
         }
     }
 
-    private List<Object> key(Method method, Object[] args) {
+    private List<Object> key(Method method, Object[] args, boolean[] identityBy) {
         List<Object> key = new ArrayList<>();
         key.add(method);
-        key.addAll(Arrays.asList(args));
+        // add only identified elements
+        for(int i = 0; i < Math.min(identityBy.length, args.length); ++i)
+            if(identityBy[i])
+                key.add(args[i]);
         return key;
     }
 }
