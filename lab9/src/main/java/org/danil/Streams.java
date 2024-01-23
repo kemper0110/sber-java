@@ -16,7 +16,7 @@ public class Streams<T> {
         return new Streams<>(new ArrayList<>(list));
     }
 
-    public Streams<T> filter(Predicate<T> predicate) {
+    public Streams<T> filter(Predicate<? super T> predicate) {
         final var newlist = new ArrayList<T>(this.list.size());
 
         for (T t : this.list)
@@ -27,7 +27,7 @@ public class Streams<T> {
         return this;
     }
 
-    public <V> Streams<V> transform(Function<T, V> mapper) {
+    public <V> Streams<V> transform(Function<? super T, ? extends V> mapper) {
         final var newlist = new ArrayList<V>(this.list.size());
 
         for (T t : this.list)
@@ -36,7 +36,7 @@ public class Streams<T> {
         return new Streams<>(newlist);
     }
 
-    public <K, V> Map<K, V> toMap(Function<T, K> keyMapper, Function<T, V> valueMapper) {
+    public <K, V> Map<K, V> toMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends V> valueMapper) {
         final var map = new HashMap<K, V>(this.list.size());
 
         for (T t : list)
