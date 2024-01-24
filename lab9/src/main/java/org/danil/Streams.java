@@ -1,46 +1,59 @@
 package org.danil;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.util.Spliterator.ORDERED;
+
 public class Streams<T> {
-    List<T> list;
-    Streams(List<T> list) {
-        this.list = list;
+    Spliterator<T> spliterator;
+
+    Streams(Spliterator<T> spliterator) {
+        this.spliterator = spliterator;
     }
-    public static <T> Streams<T> of(List<T> list) {
-        return new Streams<>(new ArrayList<>(list));
+
+    public static <T> Streams<T> of(Iterable<T> list) {
+        return new Streams<>(list.spliterator());
     }
 
     public Streams<T> filter(Predicate<? super T> predicate) {
-        final var newlist = new ArrayList<T>(this.list.size());
+        return new Streams<>(new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE, ORDERED) {
+            T value = null;
+            @Override
+            public boolean tryAdvance(Consumer<? super T> action) {
+                while(spliterator.tryAdvance(value -> this.value = value)) {
+                    if(!predicate.test(value)) continue;
 
-        for (T t : this.list)
-            if(predicate.test(t))
-                newlist.add(t);
-
-        this.list = newlist;
-        return this;
+                    action.accept(value);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     public <V> Streams<V> transform(Function<? super T, ? extends V> mapper) {
-        final var newlist = new ArrayList<V>(this.list.size());
+        return new Streams<>(new Spliterators.AbstractSpliterator<V>(Long.MAX_VALUE, ORDERED) {
+            T value = null;
+            @Override
+            public boolean tryAdvance(Consumer<? super V> action) {
+                if(!spliterator.tryAdvance(value -> this.value = value))
+                    return false;
 
-        for (T t : this.list)
-            newlist.add(mapper.apply(t));
-
-        return new Streams<>(newlist);
+                action.accept(mapper.apply(value));
+                return true;
+            }
+        });
     }
 
     public <K, V> Map<K, V> toMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends V> valueMapper) {
-        final var map = new HashMap<K, V>(this.list.size());
+        final var map = new HashMap<K, V>();
 
-        for (T t : list)
-            map.put(keyMapper.apply(t), valueMapper.apply(t));
+        while(spliterator.tryAdvance(t -> map.put(keyMapper.apply(t), valueMapper.apply(t)))) {
+
+        }
 
         return map;
     }
