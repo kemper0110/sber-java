@@ -1,11 +1,8 @@
 package org.danil;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static java.util.Spliterator.ORDERED;
 
 public class Streams<T> {
     Iterator<T> iterator;
@@ -14,13 +11,12 @@ public class Streams<T> {
         this.iterator = iterator;
     }
 
-    public static <T> Streams<T> of(Iterable<T> list) {
-        return new Streams<>(list.iterator());
+    public static <T> Streams<T> of(Iterable<T> iterable) {
+        return new Streams<>(iterable.iterator());
     }
 
     public Streams<T> filter(Predicate<? super T> predicate) {
-
-        return new Streams<>(new Iterator<T>() {
+        return new Streams<>(new Iterator<>() {
             T value = null;
             @Override
             public boolean hasNext() {
@@ -39,7 +35,7 @@ public class Streams<T> {
     }
 
     public <V> Streams<V> transform(Function<? super T, ? extends V> mapper) {
-        return new Streams<>(new Iterator<V>() {
+        return new Streams<>(new Iterator<>() {
             @Override
             public boolean hasNext() {
                 return iterator.hasNext();
