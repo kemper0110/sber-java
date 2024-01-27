@@ -2,10 +2,10 @@ package org.danil;
 
 import java.io.*;
 
-class EncryptedMain {
+class Main {
     public static void main(String... args) throws FileNotFoundException {
         // replace with your path
-        final var dir = "C:\\Users\\Danil\\IdeaProjects\\sber-java\\lab7\\target\\classes\\org\\danil";
+        final var dir = "C:\\Users\\Danil\\IdeaProjects\\sber-java\\lab7\\encrypted-classloader\\target\\classes\\org\\danil";
         final byte key = 1;
 
 
@@ -29,7 +29,7 @@ class EncryptedMain {
 
         // decrypt recently encrypted class
 
-        final var encryptedClassLoader = new EncryptedClassLoader(key, new File(dir), EncryptedMain.class.getClassLoader());
+        final var encryptedClassLoader = new EncryptedClassLoader(key, new File(dir), Main.class.getClassLoader());
 
         try {
             final var EncryptedClass = encryptedClassLoader.findClass("EncryptedClass.class");
