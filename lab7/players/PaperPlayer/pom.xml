@@ -5,26 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.danil</groupId>
-        <artifactId>lab7</artifactId>
+        <artifactId>players</artifactId>
         <version>1.0</version>
     </parent>
 
-    <artifactId>players</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>PaperPlayer</module>
-        <module>RandomPlayer</module>
-        <module>RockHaterPlayer</module>
-    </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.danil</groupId>
-            <artifactId>arena</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
+    <artifactId>PaperPlayer</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
