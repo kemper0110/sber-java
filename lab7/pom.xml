@@ -11,7 +11,7 @@
     <modules>
         <module>encrypted-classloader</module>
         <module>arena</module>
-        <module>plugins</module>
+        <module>players</module>
     </modules>
 
     <properties>

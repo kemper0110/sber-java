@@ -8,7 +8,7 @@ public class Main {
 
         System.out.print("Root directory(default=my): ");
 
-        final var defaultDirectory = "file:///C:/Users/Danil/IdeaProjects/sber-java/lab7/plugins/target/classes";
+        final var defaultDirectory = "file:///C:/Users/Danil/IdeaProjects/sber-java/lab7/players/target/classes";
         final var inputDirectory = scanner.nextLine();
         final var rootDirectory = inputDirectory == "" ? defaultDirectory : inputDirectory;
 

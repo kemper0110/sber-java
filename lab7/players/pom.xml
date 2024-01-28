@@ -9,7 +9,7 @@
         <version>1.0</version>
     </parent>
 
-    <artifactId>plugins</artifactId>
+    <artifactId>players</artifactId>
 
     <dependencies>
         <dependency>
