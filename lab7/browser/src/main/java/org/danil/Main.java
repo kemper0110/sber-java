@@ -3,12 +3,12 @@ package org.danil;
 public class Main {
     public static void main(String[] args) {
 
-        final var pluginManager = new PluginManager("file:///C:/Users/Danil/IdeaProjects/sber-java/lab7/plugins/target/plugins-1.0.jar");
+        final var pluginManager = new PluginManager("file:///C:/Users/Danil/IdeaProjects/sber-java/lab7/plugins");
 
-        final var basicPlugin = pluginManager.load("", "org.danil.basic.BasicPlugin");
+        final var basicPlugin = pluginManager.load("BasicPlugin/target/BasicPlugin-1.0.jar", "org.danil.BasicPlugin");
         basicPlugin.doUsefull();
 
-        final var hugePlugin = pluginManager.load("", "org.danil.huge.HugePlugin");
+        final var hugePlugin = pluginManager.load("HugePlugin/target/HugePlugin-1.0.jar", "org.danil.HugePlugin");
         hugePlugin.doUsefull();
     }
 }

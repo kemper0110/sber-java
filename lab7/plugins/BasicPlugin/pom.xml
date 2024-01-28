@@ -5,29 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.danil</groupId>
-        <artifactId>lab7</artifactId>
+        <artifactId>plugins</artifactId>
         <version>1.0</version>
     </parent>
 
-    <artifactId>plugins</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>BasicPlugin</module>
-        <module>HugePlugin</module>
-    </modules>
+    <artifactId>BasicPlugin</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.danil</groupId>
-            <artifactId>browser</artifactId>
-            <version>1.0</version>
-        </dependency>
-    </dependencies>
 
 </project>

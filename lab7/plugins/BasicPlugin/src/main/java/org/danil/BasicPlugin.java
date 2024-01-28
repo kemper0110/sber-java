@@ -1,4 +1,4 @@
-package org.danil.basic;
+package org.danil;
 
 import org.danil.Plugin;
 

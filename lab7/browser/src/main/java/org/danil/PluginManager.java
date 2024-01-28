@@ -12,7 +12,7 @@ public class PluginManager {
     public Plugin load(String pluginName, String pluginClassName) {
         try {
             final var classloader = new URLClassLoader(new URL[]{
-               new URL(pluginRootDirectory)
+               new URL(pluginRootDirectory + "/" + pluginName)
             });
             return (Plugin) classloader.loadClass(pluginClassName).getConstructor().newInstance();
         } catch (Exception e) {

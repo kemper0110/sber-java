@@ -1,13 +1,15 @@
-package org.danil.huge;
-
-import org.danil.Plugin;
+package org.danil;
 
 public class HugePlugin implements Plugin {
-    final char[] alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
     @Override
     public void doUsefull() {
         for(int i = 0; i < 100; ++i) {
-            System.out.print(alphabet[i % alphabet.length]);
+            System.out.print("\r<");
+            for(int j = 0; j < i; ++j)
+                System.out.print("=");
+            for(int j = i; j < 100; ++j)
+                System.out.print(" ");
+            System.out.print(">");
             try {
                 Thread.sleep(20);
             } catch (InterruptedException e) {
