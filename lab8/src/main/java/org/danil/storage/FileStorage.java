@@ -2,18 +2,15 @@ package org.danil.storage;
 
 import java.io.*;
 
-public class PersistentStorage<Key, Volume> implements CacheStorage<Key, Volume> {
+public class FileStorage<Key, Volume> implements CacheStorage<Key, Volume> {
     InMemoryStorage<Key, Volume> storage;
-    String filename;
-    boolean zip;
+    final String filename;
 
-    public PersistentStorage(String filename, boolean zip) {
+    public FileStorage(String filename) {
         this.filename = filename;
-        this.zip = zip;
-
-        try (FileInputStream fis = new FileInputStream(filename);
-             ObjectInputStream in = new ObjectInputStream(fis)) {
-            this.storage = (InMemoryStorage<Key, Volume>) in.readObject();
+        try (var fileInputStream = new FileInputStream(filename);
+             var objectInputStream = new ObjectInputStream(fileInputStream)) {
+            this.storage = (InMemoryStorage<Key, Volume>) objectInputStream.readObject();
         } catch (FileNotFoundException e) {
             this.storage = new InMemoryStorage<>();
         } catch (Exception e) {
@@ -29,9 +26,9 @@ public class PersistentStorage<Key, Volume> implements CacheStorage<Key, Volume>
     @Override
     public void put(Key key, Volume volume) {
         storage.put(key, volume);
-        try (FileOutputStream fos = new FileOutputStream(filename);
-             ObjectOutputStream out = new ObjectOutputStream(fos)) {
-            out.writeObject(storage);
+        try (var fileOutputStream = new FileOutputStream(filename);
+             var objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
+            objectOutputStream.writeObject(storage);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

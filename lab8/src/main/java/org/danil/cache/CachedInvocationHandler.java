@@ -2,7 +2,8 @@ package org.danil.cache;
 
 import org.danil.storage.CacheStorage;
 import org.danil.storage.InMemoryStorage;
-import org.danil.storage.PersistentStorage;
+import org.danil.storage.FileStorage;
+import org.danil.storage.ZipFileStorage;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -29,7 +30,10 @@ public class CachedInvocationHandler implements InvocationHandler {
             final var storage = switch (annotation.cacheType()) {
                 case FILE -> {
                     final var filename = annotation.filenamePrefix() + method.getName();
-                    yield new PersistentStorage<List<Object>, Object>(filename, annotation.zip());
+                    if (annotation.zip())
+                        yield new ZipFileStorage<List<Object>, Object>(filename);
+                    else
+                        yield new FileStorage<List<Object>, Object>(filename);
                 }
                 case IN_MEMORY -> new InMemoryStorage<List<Object>, Object>();
             };
