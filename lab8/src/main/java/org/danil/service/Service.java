@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 public interface Service {
-    @Cache(cacheType = Cache.CacheType.FILE, identityBy = {true, true, false}, filenamePrefix = "cached_")
+    @Cache(cacheType = Cache.CacheType.FILE, identityBy = {true, true, false}, filenamePrefix = "cached_", zip = true)
     List<String> run(String item, double value, Date date);
 
     @Cache()
