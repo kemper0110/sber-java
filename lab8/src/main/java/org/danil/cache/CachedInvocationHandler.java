@@ -27,16 +27,7 @@ public class CachedInvocationHandler implements InvocationHandler {
 
         if (!methodStorageMap.containsKey(method)) {
             System.out.println("Creating " + annotation.cacheType() + " storage for " + method.getName());
-            final var storage = switch (annotation.cacheType()) {
-                case FILE -> {
-                    final var filename = annotation.filenamePrefix() + method.getName();
-                    if (annotation.zip())
-                        yield new ZipFileStorage<List<Object>, Object>(filename);
-                    else
-                        yield new FileStorage<List<Object>, Object>(filename);
-                }
-                case IN_MEMORY -> new InMemoryStorage<List<Object>, Object>();
-            };
+            final var storage = makeStorage(method);
             methodStorageMap.put(method, storage);
         }
 
@@ -47,7 +38,7 @@ public class CachedInvocationHandler implements InvocationHandler {
         if (!storage.containsKey(key)) {
             System.out.println("Delegation of " + method.getName());
             final var result = invoke(method, args);
-            if (result instanceof List<?> && ((List<?>) result).size() > annotation.maxListSize())
+            if (!shouldCacheResult(method, result))
                 return result;
             storage.put(key, result);
         } else {
@@ -66,6 +57,37 @@ public class CachedInvocationHandler implements InvocationHandler {
         }
     }
 
+    /**
+     * Фабричный метод для создания хранилища
+     */
+    protected CacheStorage<List<Object>, Object> makeStorage(Method method) {
+        final var annotation = method.getAnnotation(Cache.class);
+        return switch (annotation.cacheType()) {
+            case FILE -> {
+                final var filename = annotation.filenamePrefix() + method.getName();
+                if (annotation.zip())
+                    yield new ZipFileStorage<>(filename);
+                else
+                    yield new FileStorage<>(filename);
+            }
+            case IN_MEMORY -> new InMemoryStorage<>();
+        };
+    }
+
+    /**
+     * Метод проверки необходимости кешировать результат
+     */
+    protected boolean shouldCacheResult(Method method, Object result) {
+        final var annotation = method.getAnnotation(Cache.class);
+        final var isList = result instanceof List<?>;
+        if(!isList) return true;
+        final var listResult = (List<?>) result;
+        return listResult.size() <= annotation.maxListSize();
+    }
+
+    /**
+     * Метод генерации ключа
+     */
     private List<Object> key(Method method, Object[] args, boolean[] identityBy) {
         List<Object> key = new ArrayList<>();
         key.add(method.getName());
