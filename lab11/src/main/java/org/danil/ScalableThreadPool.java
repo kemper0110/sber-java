@@ -1,44 +1,43 @@
 package org.danil;
 
+import lombok.Getter;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.Semaphore;
 
 public class ScalableThreadPool implements ThreadPool {
-    final List<Thread> threads;
+
+    class BusyThread extends Thread {
+        @Getter
+        private volatile boolean busy = false;
+        @Override
+        public void run() {
+            while (true) {
+                Runnable task;
+                synchronized (tasks) {
+                    task = tasks.poll();
+                }
+                if (task == null) return;
+                this.busy = true;
+                task.run();
+                this.busy = false;
+            }
+        }
+    }
+
+    final List<BusyThread> threads;
+    final int minThreadCount, maxThreadCount;
     final private Queue<Runnable> tasks = new ArrayDeque<>(10);
 
-    final Semaphore semaphore = new Semaphore(0);
-
     public ScalableThreadPool(int minThreadCount, int maxThreadCount) {
-        try {
-            semaphore.acquire(maxThreadCount - minThreadCount);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        this.minThreadCount = minThreadCount;
+        this.maxThreadCount = maxThreadCount;
         this.threads = new ArrayList<>(maxThreadCount);
 
         for (int i = 0; i < minThreadCount; ++i)
-            this.threads.add(new Thread(this::threadJob));
-    }
-
-    private void threadJob() {
-        while (true) {
-            Runnable task;
-            synchronized (tasks) {
-                task = tasks.poll();
-            }
-            if (task == null) return;
-            try {
-                semaphore.acquire();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            task.run();
-            semaphore.release();
-        }
+            this.threads.add(new BusyThread());
     }
 
     @Override
@@ -51,10 +50,8 @@ public class ScalableThreadPool implements ThreadPool {
     public void execute(Runnable task) {
         /*
             Если все потоки заняты, то нужно создать новый.
-            нужно ли определять забиты ли потоки.
-
          */
-        if (semaphore.availablePermits() > 0) {
+        if (threads.stream().allMatch(BusyThread::isBusy) && threads.size() < maxThreadCount) {
             synchronized (tasks) {
                 if (tasks.isEmpty()) {
                     tasks.add(task);
