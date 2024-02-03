@@ -5,49 +5,47 @@ import java.util.concurrent.Semaphore;
 
 
 public class FixedThreadPool implements ThreadPool {
-    final private Thread[] threads;
     final private Queue<Runnable> tasks = new ArrayDeque<>(10);
     final private Semaphore workingThreads;
-    final int threadCount;
 
-    public FixedThreadPool(int threadCount) {
-        this.threads = new Thread[threadCount];
-        this.workingThreads = new Semaphore(threadCount);
-        this.threadCount = threadCount;
-
-        for (int i = 0; i < this.threads.length; ++i)
-            this.threads[i] = new Thread(this::threadJob);
-    }
-
-    private void threadJob() {
-        while (true) {
-            Runnable task;
-            synchronized (tasks) {
-                task = tasks.poll();
-                if (task == null) {
-                    try {
-                        tasks.wait();
-                    } catch (InterruptedException e) {
-                        break;
+    class Worker extends Thread {
+        @Override
+        public void run() {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Runnable task;
+                    synchronized (tasks) {
+                        task = tasks.poll();
+                        if (task == null)
+                            tasks.wait();
                     }
+                    if (task == null)
+                        continue;
+                    workingThreads.acquire();
+                    task.run();
+                    workingThreads.release();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
-            if (task == null)
-                continue;
-            try {
-                workingThreads.acquire();
-            } catch (InterruptedException e) {
-                break;
-            }
-            task.run();
-            workingThreads.release();
         }
     }
 
+    final private Worker[] workers;
+
+    public FixedThreadPool(int threadCount) {
+        this.workers = new Worker[threadCount];
+        this.workingThreads = new Semaphore(threadCount);
+
+        for (int i = 0; i < this.workers.length; ++i)
+            this.workers[i] = new Worker();
+    }
+
+
     @Override
     public void start() {
-        for (Thread thread : threads)
-            thread.start();
+        for (Worker worker : workers)
+            worker.start();
     }
 
     @Override
@@ -60,13 +58,13 @@ public class FixedThreadPool implements ThreadPool {
     @Override
     public void shutdown() {
         try {
-            workingThreads.acquire(this.threadCount);
+            workingThreads.acquire(workers.length);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        for (Thread thread : threads) {
-            if(!thread.isInterrupted()) {
-                thread.interrupt();
+        for (Worker worker : workers) {
+            if (!worker.isInterrupted()) {
+                worker.interrupt();
             }
         }
     }
