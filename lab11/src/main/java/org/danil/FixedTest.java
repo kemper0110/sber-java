@@ -23,5 +23,6 @@ class FixedTest {
 
         pool.start();
 
+        pool.shutdown();
     }
 }
