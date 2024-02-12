@@ -16,14 +16,14 @@ public class FixedThreadPool implements ThreadPool {
                     Runnable task;
                     synchronized (tasks) {
                         task = tasks.poll();
-                        if (task == null)
+                        if (task == null) {
+                            // если задач нет, то освобождаем семафор и ждем
+                            workingThreads.release();
                             tasks.wait();
+                        }
                     }
-                    if (task == null)
-                        continue;
-                    workingThreads.acquire();
+                    if (task == null) continue;
                     task.run();
-                    workingThreads.release();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -50,6 +50,9 @@ public class FixedThreadPool implements ThreadPool {
 
     @Override
     public void execute(Runnable task) {
+        // Если есть свободный поток, то для него захватывается семафор и кладется задача в очередь
+        // иначе семафор не захватывается и задача просто кладется в очередь
+        workingThreads.tryAcquire();
         synchronized (tasks) {
             tasks.add(task);
         }
@@ -57,6 +60,7 @@ public class FixedThreadPool implements ThreadPool {
 
     @Override
     public void shutdown() {
+        // ожидаем, когда все потоки закончат свои задачи и освободят семафор
         try {
             workingThreads.acquire(workers.length);
         } catch (InterruptedException e) {

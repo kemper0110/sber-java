@@ -22,6 +22,8 @@ public class ScalableThreadPool implements ThreadPool {
 
         @Override
         public void run() {
+            // для вновь созданного потока может быть сразу передана задача
+            // она выполняется немедленно
             if (initialTask != null)
                 initialTask.run();
             while (!Thread.currentThread().isInterrupted()) {
@@ -30,6 +32,7 @@ public class ScalableThreadPool implements ThreadPool {
                     synchronized (tasks) {
                         task = tasks.poll();
                         if (task == null) {
+                            // если задач нет, то освобождаем семафор и ждем
                             System.out.println(Thread.currentThread().getName() + " is waiting");
                             workingThreads.release();
                             tasks.wait();
@@ -72,11 +75,15 @@ public class ScalableThreadPool implements ThreadPool {
     @Override
     public void execute(Runnable task) {
         System.out.println("available threads: " + workingThreads.availablePermits());
+        // если удалось захватить семафор, то был свободный поток
+        // он заберет для выполнения добавленную в очередь задачу
         if (workingThreads.tryAcquire()) {
             synchronized (tasks) {
                 tasks.add(task);
             }
-        } else if (workers.size() < maxThreadCount) {
+        }
+        // иначе создаем новый поток с задачей, минуя очередь
+        else if (workers.size() < maxThreadCount) {
             System.out.println("added thread");
             workers.add(new Worker(task));
         }
@@ -85,6 +92,7 @@ public class ScalableThreadPool implements ThreadPool {
     @Override
     public void shutdown() {
         System.out.println("shutdown has:" + workingThreads.availablePermits() + " and requires:" + workers.size());
+        // ожидаем, когда все потоки закончат свои задачи и освободят семафор
         try {
             workingThreads.acquire(workers.size());
         } catch (InterruptedException e) {
