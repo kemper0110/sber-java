@@ -1,0 +1,17 @@
+spring:
+  main:
+    web-application-type: reactive
+  r2dbc:
+    url: r2dbc:postgresql://localhost/postgres
+    username: postgres
+    password: postgres
+  flyway:
+    url: jdbc:postgresql://localhost/postgres
+    user: postgres
+    password: postgres
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
