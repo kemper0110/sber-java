@@ -1,11 +1,10 @@
-create table request
+create table users
 (
-    id   bigserial primary key,
-    text text
+    id        bigserial primary key,
+    firstname varchar(50),
+    lastname  varchar(50),
+    job       varchar(50),
+    mail      varchar(50),
+    phone     varchar(50),
+    image     varchar(50)
 );
-
-create table response
-(
-    id   bigserial primary key references request(id) on UPDATE cascade on delete cascade,
-    text text
-)
