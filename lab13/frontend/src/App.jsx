@@ -60,7 +60,7 @@ function App() {
                         leftSectionPointerEvents="pointer"
                         leftSection={<button onClick={onSubmit}><IconSearch/></button>}
                         rightSectionPointerEvents="none"
-                        rightSection={isLoading ? <Loader color="blue" size={'sm'} type={'dots'}/> : null}
+                        rightSection={isLoading ? <Loader color="blue" size={'sm'}/> : null}
                         label="Поиск пользователя по имени"
                         placeholder="Имя для поиска"
                     />
@@ -89,7 +89,7 @@ function App() {
                                             </Group>
                                         </Table.Td>
                                         <Table.Td>
-                                            <Badge color={jobColors[user.job.toLowerCase()]} variant="light">
+                                            <Badge variant="light">
                                                 {user.job}
                                             </Badge>
                                         </Table.Td>
