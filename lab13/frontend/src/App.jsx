@@ -1,79 +1,57 @@
-import React, {useEffect, useState} from 'react';
-import {TextInput} from '@mantine/core';
-import {IconSearch} from '@tabler/icons-react';
-import {Loader} from '@mantine/core';
-
-import {Avatar, Badge, Table, Group, Text, ActionIcon, Anchor, rem} from '@mantine/core';
-import {IconPencil, IconTrash} from '@tabler/icons-react';
+import React, {useRef, useState} from 'react';
+import {ActionIcon, Anchor, Avatar, Badge, Group, Loader, rem, Table, Text, TextInput} from '@mantine/core';
+import {IconPencil, IconSearch, IconTrash} from '@tabler/icons-react';
 
 
-/**
- * @type {{manager: string, designer: string, engineer: string}}
- */
-const jobColors = {
-    engineer: 'blue',
-    manager: 'cyan',
-    designer: 'pink',
-};
+const getAvatar = id => `https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-${id}.png`
+
+const useUserQuery = () => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false)
+    const source = useRef(null)
+    const onSubmit = (name) => {
+        setUsers([])
+        console.log('send', name)
+        setLoading(true)
+
+        if(source.current)
+            source.current.close()
+        source.current = new EventSource(`/api/user?q=${encodeURIComponent(name)}`)
+        source.current.onmessage = e => {
+            setUsers(users => [...users, JSON.parse(e.data)])
+        }
+        source.current.onerror = e => {
+            console.info("err", e, e.type)
+            setLoading(false)
+            source.current.close()
+        }
+    }
+    return {
+        isLoading: loading,
+        users,
+        submit: onSubmit
+    }
+}
+
 
 function App() {
-    const [users, setUsers] = useState([
-        {
-            avatar:
-                'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-1.png',
-            name: 'Robert Wolfkisser',
-            job: 'Engineer',
-            email: 'rob_wolf@gmail.com',
-            phone: '+44 (452) 886 09 12',
-        },
-        {
-            avatar:
-                'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-7.png',
-            name: 'Jill Jailbreaker',
-            job: 'Engineer',
-            email: 'jj@breaker.com',
-            phone: '+44 (934) 777 12 76',
-        },
-        {
-            avatar:
-                'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png',
-            name: 'Henry Silkeater',
-            job: 'Designer',
-            email: 'henry@silkeater.io',
-            phone: '+44 (901) 384 88 34',
-        },
-        {
-            avatar:
-                'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-3.png',
-            name: 'Bill Horsefighter',
-            job: 'Designer',
-            email: 'bhorsefighter@gmail.com',
-            phone: '+44 (667) 341 45 22',
-        },
-        {
-            avatar:
-                'https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-10.png',
-            name: 'Jeremy Footviewer',
-            job: 'Manager',
-            email: 'jeremy@foot.dev',
-            phone: '+44 (881) 245 65 65',
-        },
-    ]);
     const [query, setQuery] = useState("")
-    const [loading, setLoading] = useState(false)
-    const onSubmit = (e) => {
+    const {isLoading, users, submit} = useUserQuery()
+
+    const usersWithImages = users.map(user => ({
+        ...user,
+        image: getAvatar(Number.parseInt(user.image) + 1)
+    }))
+
+    const onSubmit = e => {
         e.preventDefault()
-        console.log('send', query)
-        setLoading(true)
-        setTimeout(() => {
-            setLoading(false)
-        }, 500)
+        submit(query)
     }
 
     return (
-        <div className={'h-screen w-full flex place-items-center justify-center'}>
-            <div className={'flex flex-col items-center'}>
-                <form onSubmit={onSubmit}>
+        <div className={'min-h-screen w-full'}>
+            <div className={'mt-20 flex flex-col items-center'}>
+                <form onSubmit={onSubmit} >
                     <TextInput
                         value={query}
                         onChange={e => setQuery(e.currentTarget.value)}
@@ -82,12 +60,12 @@ function App() {
                         leftSectionPointerEvents="pointer"
                         leftSection={<button onClick={onSubmit}><IconSearch/></button>}
                         rightSectionPointerEvents="none"
-                        rightSection={loading ? <Loader color="blue" size={'sm'} type={'dots'}/> : null}
+                        rightSection={isLoading ? <Loader color="blue" size={'sm'} type={'dots'}/> : null}
                         label="Поиск пользователя по имени"
                         placeholder="Имя для поиска"
                     />
                 </form>
-                <Table.ScrollContainer minWidth={800} mt={20}>
+                <Table.ScrollContainer minWidth={800} mt={20} w={1000}>
                     <Table verticalSpacing="sm">
                         <Table.Thead>
                             <Table.Tr>
@@ -100,13 +78,13 @@ function App() {
                         </Table.Thead>
                         <Table.Tbody>
                             {
-                                users.map(user => (
-                                    <Table.Tr key={user.name}>
+                                usersWithImages.map(user => (
+                                    <Table.Tr key={user.id}>
                                         <Table.Td>
                                             <Group gap="sm">
-                                                <Avatar size={30} src={user.avatar} radius={30}/>
+                                                <Avatar size={30} src={user.image} radius={30}/>
                                                 <Text fz="sm" fw={500}>
-                                                    {user.name}
+                                                    {user.firstname} {user.lastname}
                                                 </Text>
                                             </Group>
                                         </Table.Td>
@@ -117,7 +95,7 @@ function App() {
                                         </Table.Td>
                                         <Table.Td>
                                             <Anchor component="button" size="sm">
-                                                {user.email}
+                                                {user.mail}
                                             </Anchor>
                                         </Table.Td>
                                         <Table.Td>
