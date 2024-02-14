@@ -13,7 +13,7 @@ import java.time.Duration;
 public class UserService {
     private final UserRepository userRepository;
     public Flux<User> findAll() {
-        return userRepository.findAll().take(10).delayElements(Duration.ofMillis(300));
+        return userRepository.findAll().delayElements(Duration.ofMillis(300));
     }
     public Flux<User> findAllByName(String name) {
         return userRepository.findAllByName(name).delayElements(Duration.ofMillis(300));
