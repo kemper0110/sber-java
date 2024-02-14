@@ -12,7 +12,7 @@ FROM eclipse-temurin:21-jdk-alpine as backend-build
 WORKDIR /usr/app
 COPY . .
 COPY --from=frontend-build /usr/app/dist src/main/resources/static
-RUN ./mvnw install -DskipTests
+RUN chmod +x mvnw && ./mvnw install -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
 
