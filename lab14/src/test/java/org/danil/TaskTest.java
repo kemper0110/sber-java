@@ -18,13 +18,13 @@ class TaskTest {
     Callable<String> callableForTask;
 
     @ParameterizedTest
-    @ValueSource(ints = {5_000})
+    @ValueSource(ints = {1000})
     void testTask(int iterations) throws Exception {
         final var expectedResult = "hello-world";
 
         when(callableForTask.call()).thenReturn(expectedResult);
 
-        for (int i = 0; i < iterations; ++i) {
+        for (int i = 1; i < iterations + 1; ++i) {
 
             final var task = new Task<>(callableForTask);
             final Runnable threadTask = () -> {
@@ -36,12 +36,15 @@ class TaskTest {
 //            assertInstanceOf(TaskException.class, ex);
             };
 
-            IntStream.range(0, 20)
+            // тестирование при конкурентности в 1000 потоков
+            final var threads = IntStream.range(0, 1000)
                     .mapToObj(_i -> new Thread(threadTask))
                     .peek(t -> t.setUncaughtExceptionHandler(exceptionHandler))
-                    .peek(Thread::start)
-                    .forEach(t -> assertDoesNotThrow(() -> t.join()));
-
+                    .toList();
+            for (Thread thread : threads)
+                thread.start();
+            for (Thread thread : threads)
+                assertDoesNotThrow(() -> thread.join());
         }
         verify(callableForTask, times(iterations)).call();
     }
