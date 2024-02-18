@@ -18,12 +18,9 @@ public class ExecutionManagerImpl implements ExecutionManager {
     public Context execute(final Runnable callback, final Runnable... tasks) {
         final var context = new ContextImpl(queue, tasks.length, callback);
 
-        queue.addAll(
-                IntStream.range(0, tasks.length)
-                        .mapToObj(index -> context.createTask(index, tasks[index]))
-                        .peek(executorService::execute)
-                        .toList()
-        );
+        IntStream.range(0, tasks.length)
+                .mapToObj(index -> context.createTask(index, tasks[index]))
+                .forEach(executorService::execute);
         return context;
     }
 }

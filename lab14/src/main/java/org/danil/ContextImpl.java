@@ -6,11 +6,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ContextImpl implements Context {
     final private AtomicInteger completedTaskCount = new AtomicInteger(0);
     final private AtomicInteger failedTaskCount = new AtomicInteger(0);
+    volatile private boolean finished = false;
     /**
      * writes HAPPENS-BEFORE {@link #finished} writes
      */
     private int interruptedTaskCount = 0;
-    volatile boolean finished = false;
     final Runnable[] packagedTasks;
     final Runnable callback;
     final BlockingQueue<Runnable> queue;
@@ -44,14 +44,14 @@ public class ContextImpl implements Context {
                 runnable.run();
             } catch (Exception e) {
                 failedTaskCount.incrementAndGet();
-            }
-            completedTaskCount.incrementAndGet();
-            // DCL
-            if (!finished) {
-                synchronized (this) {
-                    if (!finished) {
-                        finished = true;
-                        callback.run();
+            } finally {
+                // DCL
+                if (completedTaskCount.incrementAndGet() == packagedTasks.length) {
+                    synchronized (this) {
+                        if (completedTaskCount.get() == packagedTasks.length) {
+                            callback.run();
+                            finished = true;
+                        }
                     }
                 }
             }
