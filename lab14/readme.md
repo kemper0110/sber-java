@@ -51,5 +51,6 @@ public interface Context {
 
 Задание 1
 * Применена volatile переменная и DCL
+
 Задание 2
 * DCL, volatile с happens-before и atomic-типы
