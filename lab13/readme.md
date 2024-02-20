@@ -22,4 +22,8 @@
 
 *Закинул все в докер компос, можете попробовать запустить*
 
-Видео с демонстрацией работы [screen-recording-1708460281653.webm](screen-recording-1708460281653.webm)
+Видео с демонстрацией работы
+
+![lab13_screen.gif](lab13_screen.gif)
+
+[screen-recording-1708460281653.webm](screen-recording-1708460281653.webm)
