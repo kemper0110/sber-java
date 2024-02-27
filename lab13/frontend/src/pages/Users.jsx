@@ -1,4 +1,5 @@
 import React, {useRef, useState} from 'react';
+import {Link} from "react-router-dom";
 import {ActionIcon, Anchor, Avatar, Badge, Group, Loader, rem, Table, Text, TextInput} from '@mantine/core';
 import {IconPencil, IconSearch, IconTrash} from '@tabler/icons-react';
 
@@ -34,7 +35,7 @@ const useUserQuery = () => {
 }
 
 
-function App() {
+export default function Users() {
     const [query, setQuery] = useState("")
     const {isLoading, users, submit} = useUserQuery()
 
@@ -48,9 +49,13 @@ function App() {
         submit(query)
     }
 
+
     return (
         <div className={'min-h-screen w-full'}>
             <div className={'mt-20 flex flex-col items-center'}>
+                <Link to={"/"} className={'text-blue-400'}>
+                    Readme
+                </Link>
                 <form onSubmit={onSubmit} >
                     <TextInput
                         value={query}
@@ -121,5 +126,3 @@ function App() {
         </div>
     )
 }
-
-export default App
