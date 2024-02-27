@@ -3,11 +3,11 @@ import Users from "./pages/Users.jsx";
 
 export const routes = [
     {
-        path: "/",
+        path: "/readme",
         element: <Readme/>
     },
     {
-        path: "/users",
+        path: "/",
         element: <Users/>
     }
 ]

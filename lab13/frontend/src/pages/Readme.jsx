@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 export default function Readme() {
     return (
         <div className={'container mx-auto'}>
-            <Link to={"/users"} className={'text-blue-400'}>
+            <Link to={"/"} className={'text-blue-400'}>
                 Страница пользователей
             </Link>
             <Markdown remarkPlugins={[remarkGfm]} className={'p-4 pb-16 prose max-w-full'}>

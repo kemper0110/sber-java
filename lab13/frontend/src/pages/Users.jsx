@@ -53,7 +53,7 @@ export default function Users() {
     return (
         <div className={'min-h-screen w-full'}>
             <div className={'mt-20 flex flex-col items-center'}>
-                <Link to={"/"} className={'text-blue-400'}>
+                <Link to={"/readme"} className={'text-blue-400'}>
                     Readme
                 </Link>
                 <form onSubmit={onSubmit} >
