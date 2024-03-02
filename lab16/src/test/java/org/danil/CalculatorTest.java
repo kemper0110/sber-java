@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CalculatorTest {
-    final Calculator calculator = new Calculator();
+    final CalculatorImpl calculator = new CalculatorImpl();
     final List<Integer> expected10 = List.of(1, 1, 2, 3, 5, 8, 13, 21, 34, 55);
 
     @ParameterizedTest

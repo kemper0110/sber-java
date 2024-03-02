@@ -1,24 +1,11 @@
 package org.danil;
 
-import java.util.ArrayList;
+import org.danil.cache.Cachable;
+import org.danil.source.PostgresDBSource;
+
 import java.util.List;
 
-public class Calculator {
-//    @Cachable(H2DB.class)
-    public List<Integer> fibonacci(int n) {
-        final var list = new ArrayList<Integer>();
-        if(n == 0) return list;
-
-        list.add(1);
-
-        int prev = 0, next = 1, result = 0;
-        for (int i = 0; i < n - 1; i++) {
-            result = prev + next;
-            prev = next;
-            next = result;
-            list.add(result);
-        }
-
-        return list;
-    }
+public interface Calculator {
+    @Cachable(value = PostgresDBSource.class)
+    List<Integer> fibonacci(int n);
 }
