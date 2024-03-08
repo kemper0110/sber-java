@@ -38,7 +38,7 @@ public class DownloadRunner implements CommandLineRunner {
                             System.out.println("Top level error " + th + " " + th.getMessage());
                             blockingWait.countDown();
                         })
-                .build());
+                .build(), HttpClient.Options.builder().build());
 
         blockingWait.await();
         System.out.println("done");
