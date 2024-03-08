@@ -18,7 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Component
@@ -136,27 +138,40 @@ public class HttpClient {
 //                                        System.out.println(startLine + "\n\n" + responseHeaders);
                                                                         final var length = Integer.parseInt(responseHeaders.get("Content-Length"));
 
-//                                        System.out.println(headerBuffer.remaining() + " " + length);
+                                                                        System.out.println("rem: " + headerBuffer.remaining() + " cont-len: " + length);
 
                                                                         final var bodyBytes = new byte[length];
 
-                                                                        var bodyInHeaderBufferLength = headerBuffer.remaining();
+                                                                        final var bodyInHeaderBufferLength = headerBuffer.remaining();
                                                                         headerBuffer.get(bodyBytes, 0, bodyInHeaderBufferLength);
 
                                                                         final var bodyBuffer = ByteBuffer.allocate(length);
                                                                         String finalStartLine = startLine;
-                                                                        socket.read(bodyBuffer, null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Integer>builder()
+
+                                                                        final var readCount = bodyInHeaderBufferLength;
+                                                                        System.out.println("start readCount " + readCount);
+
+                                                                        final BiFunction<BiFunction, Integer, SimpleCompletionAdapter<Integer>> makeReadHandler = (handlerMaker, readCountI) -> new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Integer>builder()
                                                                                 .completed(readN2 -> {
                                                                                     bodyBuffer.flip();
-                                                                                    bodyBuffer.get(bodyBytes, bodyInHeaderBufferLength, readN2);
+                                                                                    bodyBuffer.get(bodyBytes, readCountI, readN2);
+                                                                                    bodyBuffer.clear();
 
-                                                                                    handler.completed.accept(new Response(finalStartLine, responseHeaders, bodyBytes));
+                                                                                    final var readCount2 = readCountI + readN2;
+                                                                                    System.out.println("lambda readCount " + readCount2);
+
+                                                                                    if (readCount2 == length) {
+                                                                                        handler.completed.accept(new Response(finalStartLine, responseHeaders, bodyBytes));
+                                                                                    } else {
+                                                                                        socket.read(bodyBuffer, null, (SimpleCompletionAdapter<Integer>) handlerMaker.apply(handlerMaker, readCount2));
+                                                                                    }
                                                                                 })
                                                                                 .failed(th -> {
-                                                                                    System.out.println("read 2");
+                                                                                    System.out.println("read " + readCountI);
                                                                                     handler.failed.accept(th);
                                                                                 })
-                                                                                .build()));
+                                                                                .build());
+                                                                        socket.read(bodyBuffer, null, makeReadHandler.apply(makeReadHandler, readCount));
                                                                     })
                                                                     .failed(th -> {
                                                                         System.out.println("read 1");
