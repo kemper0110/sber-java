@@ -92,63 +92,59 @@ public class HttpClient {
                     })
                     .build();
             final var baseContext = new BaseContext(request, handler, options, socket);
-            socket.connect(new InetSocketAddress(request.host(), 80), baseContext, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
-                    .completed(Void -> {
-                        final var headers = new HashMap<>() {{
-                            final var defaultHeaders = Map.of(
-                                    "Host", request.host(),
-                                    "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-                                    "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                                    "Connection", "close"
-                            );
-                            putAll(defaultHeaders);
-                            if (request.headers() != null)
-                                putAll(request.headers());
-                        }};
-                        final var headersString = headers.entrySet().stream()
-                                .map((entry) -> entry.getKey() + ": " + entry.getValue())
-                                .collect(Collectors.joining("\r\n"));
-                        final var requestString = """
-                                GET %s HTTP/1.1
-                                %s
-                                                    
-                                """.formatted(request.path(), headersString);
-                        socket.write(ByteBuffer.wrap(requestString.getBytes(StandardCharsets.UTF_8)), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Integer>builder()
-                                .completed(writeN -> {
-                                    // Обязательно нужно, чтобы весь заголовок запроса попал в буфер.
-                                    final var headerBuffer = ByteBuffer.allocate(10_240);
-                                    socket.read(headerBuffer, new ConnectedContext(baseContext, headerBuffer), new HeaderReadCompletionHandler());
-                                })
-                                .failed(th -> {
-                                    System.out.println("write");
-                                    handler.failed.accept(th);
-                                })
-                                .build()));
-                    })
-                    .failed(th -> {
-                        System.out.println("connect");
-                        handler.failed.accept(th);
-                    })
-                    .build())
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            socket.connect(new InetSocketAddress(request.host(), 80), baseContext, new ConnectedCompletionHandler());
+        } catch (Throwable th) {
+            responseHandler.failed.accept(th);
         }
     }
 
 
-//    static class ConnectedCompletionHandler implements CompletionHandler<Void, ConnectedContext> {
-//
-//        @Override
-//        public void completed(Void result, ConnectedContext context) {
-//
-//        }
-//
-//        @Override
-//        public void failed(Throwable exc, ConnectedContext context) {
-//
-//        }
-//    }
+    static class ConnectedCompletionHandler implements CompletionHandler<Void, BaseContext> {
+
+        @Override
+        public void completed(Void result, BaseContext context) {
+            final var headers = new HashMap<>() {{
+                final var defaultHeaders = Map.of(
+                        "Host", context.request.host(),
+                        "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+                        "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                        "Connection", "close"
+                );
+                putAll(defaultHeaders);
+                if (context.request.headers() != null)
+                    putAll(context.request.headers());
+            }};
+            final var headersString = headers.entrySet().stream()
+                    .map((entry) -> entry.getKey() + ": " + entry.getValue())
+                    .collect(Collectors.joining("\r\n"));
+            final var requestString = """
+                                GET %s HTTP/1.1
+                                %s
+                                                    
+                                """.formatted(context.request.path(), headersString);
+            context.socket.write(ByteBuffer.wrap(requestString.getBytes(StandardCharsets.UTF_8)), context, new SendedCompletionHandler());
+        }
+
+        @Override
+        public void failed(Throwable exc, BaseContext context) {
+
+        }
+    }
+
+    static class SendedCompletionHandler implements CompletionHandler<Integer, BaseContext> {
+
+        @Override
+        public void completed(Integer result, BaseContext context) {
+            // Обязательно нужно, чтобы весь заголовок запроса попал в буфер.
+            final var headerBuffer = ByteBuffer.allocate(10_240);
+            context.socket.read(headerBuffer, new ConnectedContext(context, headerBuffer), new HeaderReadCompletionHandler());
+        }
+
+        @Override
+        public void failed(Throwable exc, BaseContext context) {
+
+        }
+    }
 
     static class HeaderReadCompletionHandler implements CompletionHandler<Integer, ConnectedContext> {
 
