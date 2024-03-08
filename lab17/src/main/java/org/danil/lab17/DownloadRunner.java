@@ -1,7 +1,6 @@
 package org.danil.lab17;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.queue.PredicatedQueue;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -10,8 +9,6 @@ import java.nio.channels.CompletionHandler;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -19,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 @Component
 public class DownloadRunner implements CommandLineRunner {
     private final HttpClient httpClient;
+    private final Executor executor;
 
     @Override
     public void run(String... args) throws Exception {
@@ -66,5 +64,6 @@ public class DownloadRunner implements CommandLineRunner {
 
         System.out.println("wating ");
         blockingWait.await();
+        executor.shutdown();
     }
 }
