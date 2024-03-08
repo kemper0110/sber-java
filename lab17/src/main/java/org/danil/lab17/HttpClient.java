@@ -43,12 +43,13 @@ public class HttpClient {
     }
 
     @Builder(toBuilder = true)
-    record BaseContext (@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler, @NotNull Options options) {
+    record BaseContext(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler,
+                       @NotNull Options options,
+                       @NotNull AsynchronousSocketChannel socket) {
     }
 
     @Builder(toBuilder = true)
-    record ConnectedContext(@NotNull BaseContext baseContext, AsynchronousSocketChannel socket){
-
+    record ConnectedContext(@NotNull BaseContext baseContext, ByteBuffer headerBuffer) {
     }
 
     @Builder(toBuilder = true)
@@ -59,12 +60,10 @@ public class HttpClient {
     }
 
     @Builder(toBuilder = true)
-    record BodyContext(HeaderContext headerContext, int readCount, int bodyLength, ByteBuffer bodyBuffer, byte[] bodyBytes){
+    record BodyContext(HeaderContext headerContext, int readCount, int bodyLength, ByteBuffer bodyBuffer,
+                       byte[] bodyBytes) {
         BaseContext baseContext() {
             return headerContext.baseContext();
-        }
-        ConnectedContext connectedContext() {
-            return headerContext.connectedContext();
         }
     }
 
@@ -92,121 +91,134 @@ public class HttpClient {
                         }
                     })
                     .build();
-            final var baseContext = new BaseContext(request, handler, options);
-            final var connectedContext = new ConnectedContext(baseContext, socket);
-            socket.connect(new InetSocketAddress(request.host(), 80), connectedContext, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
-                            .completed(Void -> {
-                                final var headers = new HashMap<>() {{
-                                    final var defaultHeaders = Map.of(
-                                            "Host", request.host(),
-                                            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
-                                            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                                            "Connection", "close"
-                                    );
-                                    putAll(defaultHeaders);
-                                    if (request.headers() != null)
-                                        putAll(request.headers());
-                                }};
-                                final var headersString = headers.entrySet().stream()
-                                        .map((entry) -> entry.getKey() + ": " + entry.getValue())
-                                        .collect(Collectors.joining("\r\n"));
-                                final var requestString = """
-                                        GET %s HTTP/1.1
-                                        %s
-                                                            
-                                        """.formatted(request.path(), headersString);
-                                socket.write(ByteBuffer.wrap(requestString.getBytes(StandardCharsets.UTF_8)), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Integer>builder()
-                                        .completed(writeN -> {
-
-                                            // Обязательно нужно, чтобы весь заголовок запроса попал в буфер.
-                                            final var headerBuffer = ByteBuffer.allocate(10_240);
-                                            socket.read(headerBuffer, null,
-                                                    new SimpleCompletionAdapter<>(
-                                                            SimpleCompletionHandler.<Integer>builder()
-                                                                    .completed(readN -> {
-                                                                        headerBuffer.flip();
-
-                                                                        final var responseHeaders = new HashMap<String, String>(50);
-                                                                        String startLine = null;
-                                                                        final var lastChars = new CircularFifoQueue<Character>(4);
-                                                                        final var headerEndSequences = List.of(List.of('\r', '\n', '\r', '\n'), List.of('\r', '\r'), List.of('\n', '\n'));
-                                                                        final var lineBuffer = ByteBuffer.allocate(4096);
-                                                                        while (headerBuffer.hasRemaining()) {
-                                                                            final var b = headerBuffer.get();
-                                                                            final var c = (char) b;
-                                                                            lineBuffer.put(b);
-                                                                            lastChars.add(c);
-                                                                            if (c == '\n' || c == '\r') {
-                                                                                lineBuffer.flip();
-                                                                                final var line = StandardCharsets.UTF_8.decode(lineBuffer).toString().stripTrailing();
-                                                                                if (!Objects.equals(line, "")) {
-                                                                                    if (startLine == null) {
-                                                                                        startLine = line;
-                                                                                    } else {
-                                                                                        final var splited = line.split(": ");
-                                                                                        responseHeaders.put(splited[0], splited[1]);
-                                                                                    }
-                                                                                }
-                                                                                lineBuffer.clear();
-                                                                            }
-                                                                            final var isHeaderEnded = headerEndSequences.stream().anyMatch(headerEnd -> {
-                                                                                final var window = lastChars.stream().skip(4 - headerEnd.size()).limit(headerEnd.size()).toList();
-//                                                    System.out.format("|%s| window: %s\n", StringEscapeUtils.escapeJava("" + c), StringEscapeUtils.escapeJava(window.toString()));
-                                                                                return CollectionUtils.isEqualCollection(window, headerEnd);
-                                                                            });
-                                                                            if (isHeaderEnded) break;
-                                                                        }
-
-//                                        System.out.println(startLine + "\n\n" + responseHeaders);
-                                                                        final var length = Integer.parseInt(responseHeaders.get("Content-Length"));
-
-                                                                        System.out.println("rem: " + headerBuffer.remaining() + " cont-len: " + length);
-
-                                                                        final var bodyBytes = new byte[length];
-
-                                                                        final var bodyInHeaderBufferLength = headerBuffer.remaining();
-                                                                        headerBuffer.get(bodyBytes, 0, bodyInHeaderBufferLength);
-
-                                                                        final var bodyBuffer = ByteBuffer.allocate(length);
-
-                                                                        final var readCount = bodyInHeaderBufferLength;
-                                                                        System.out.println("start readCount " + readCount);
-
-                                                                        socket.read(bodyBuffer,
-                                                                                BodyContext.builder()
-                                                                                        .headerContext(new HeaderContext(connectedContext, startLine, responseHeaders))
-                                                                                        .readCount(bodyInHeaderBufferLength)
-                                                                                        .bodyLength(length)
-                                                                                        .bodyBuffer(bodyBuffer)
-                                                                                        .bodyBytes(bodyBytes)
-                                                                                        .build(),
-                                                                                new BodyReadCompletionHandler());
-                                                                    })
-                                                                    .failed(th -> {
-                                                                        System.out.println("read 1");
-                                                                        handler.failed.accept(th);
-                                                                    })
-                                                                    .build()
-                                                    )
-                                            );
-                                        })
-                                        .failed(th -> {
-                                            System.out.println("write");
-                                            handler.failed.accept(th);
-                                        })
-                                        .build()));
-                            })
-                            .failed(th -> {
-                                System.out.println("connect");
-                                handler.failed.accept(th);
-                            })
-                            .build())
+            final var baseContext = new BaseContext(request, handler, options, socket);
+            socket.connect(new InetSocketAddress(request.host(), 80), baseContext, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
+                    .completed(Void -> {
+                        final var headers = new HashMap<>() {{
+                            final var defaultHeaders = Map.of(
+                                    "Host", request.host(),
+                                    "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0",
+                                    "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                                    "Connection", "close"
+                            );
+                            putAll(defaultHeaders);
+                            if (request.headers() != null)
+                                putAll(request.headers());
+                        }};
+                        final var headersString = headers.entrySet().stream()
+                                .map((entry) -> entry.getKey() + ": " + entry.getValue())
+                                .collect(Collectors.joining("\r\n"));
+                        final var requestString = """
+                                GET %s HTTP/1.1
+                                %s
+                                                    
+                                """.formatted(request.path(), headersString);
+                        socket.write(ByteBuffer.wrap(requestString.getBytes(StandardCharsets.UTF_8)), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Integer>builder()
+                                .completed(writeN -> {
+                                    // Обязательно нужно, чтобы весь заголовок запроса попал в буфер.
+                                    final var headerBuffer = ByteBuffer.allocate(10_240);
+                                    socket.read(headerBuffer, new ConnectedContext(baseContext, headerBuffer), new HeaderReadCompletionHandler());
+                                })
+                                .failed(th -> {
+                                    System.out.println("write");
+                                    handler.failed.accept(th);
+                                })
+                                .build()));
+                    })
+                    .failed(th -> {
+                        System.out.println("connect");
+                        handler.failed.accept(th);
+                    })
+                    .build())
             );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+
+//    static class ConnectedCompletionHandler implements CompletionHandler<Void, ConnectedContext> {
+//
+//        @Override
+//        public void completed(Void result, ConnectedContext context) {
+//
+//        }
+//
+//        @Override
+//        public void failed(Throwable exc, ConnectedContext context) {
+//
+//        }
+//    }
+
+    static class HeaderReadCompletionHandler implements CompletionHandler<Integer, ConnectedContext> {
+
+        @Override
+        public void completed(Integer result, ConnectedContext context) {
+            context.headerBuffer.flip();
+
+            final var responseHeaders = new HashMap<String, String>(50);
+            String startLine = null;
+            final var lastChars = new CircularFifoQueue<Character>(4);
+            final var headerEndSequences = List.of(List.of('\r', '\n', '\r', '\n'), List.of('\r', '\r'), List.of('\n', '\n'));
+            final var lineBuffer = ByteBuffer.allocate(4096);
+            while (context.headerBuffer.hasRemaining()) {
+                final var b = context.headerBuffer.get();
+                final var c = (char) b;
+                lineBuffer.put(b);
+                lastChars.add(c);
+                if (c == '\n' || c == '\r') {
+                    lineBuffer.flip();
+                    final var line = StandardCharsets.UTF_8.decode(lineBuffer).toString().stripTrailing();
+                    if (!Objects.equals(line, "")) {
+                        if (startLine == null) {
+                            startLine = line;
+                        } else {
+                            final var splited = line.split(": ");
+                            responseHeaders.put(splited[0], splited[1]);
+                        }
+                    }
+                    lineBuffer.clear();
+                }
+                final var isHeaderEnded = headerEndSequences.stream().anyMatch(headerEnd -> {
+                    final var window = lastChars.stream().skip(4 - headerEnd.size()).limit(headerEnd.size()).toList();
+//                                                    System.out.format("|%s| window: %s\n", StringEscapeUtils.escapeJava("" + c), StringEscapeUtils.escapeJava(window.toString()));
+                    return CollectionUtils.isEqualCollection(window, headerEnd);
+                });
+                if (isHeaderEnded) break;
+            }
+
+//                                        System.out.println(startLine + "\n\n" + responseHeaders);
+            final var length = Integer.parseInt(responseHeaders.get("Content-Length"));
+
+            System.out.println("rem: " + context.headerBuffer.remaining() + " cont-len: " + length);
+
+            final var bodyBytes = new byte[length];
+
+            final var bodyInHeaderBufferLength = context.headerBuffer.remaining();
+            context.headerBuffer.get(bodyBytes, 0, bodyInHeaderBufferLength);
+
+            final var bodyBuffer = ByteBuffer.allocate(length);
+
+            final var readCount = bodyInHeaderBufferLength;
+            System.out.println("start readCount " + readCount);
+
+            final var headerContext = new HeaderContext(context, startLine, responseHeaders);
+            context.baseContext.socket.read(bodyBuffer,
+                    BodyContext.builder()
+                            .headerContext(headerContext)
+                            .readCount(bodyInHeaderBufferLength)
+                            .bodyLength(length)
+                            .bodyBuffer(bodyBuffer)
+                            .bodyBytes(bodyBytes)
+                            .build(),
+                    new BodyReadCompletionHandler());
+        }
+
+        @Override
+        public void failed(Throwable exc, ConnectedContext context) {
+
+        }
+    }
 
     static class BodyReadCompletionHandler implements CompletionHandler<Integer, BodyContext> {
 
@@ -222,7 +234,7 @@ public class HttpClient {
             if (readCount2 == context.bodyLength) {
                 context.baseContext().handler.completed.accept(new Response(context.headerContext().startLine, context.headerContext().headers, context.bodyBytes));
             } else {
-                context.connectedContext().socket.read(context.bodyBuffer,
+                context.baseContext().socket.read(context.bodyBuffer,
                         context.toBuilder().readCount(readCount2).build(),
                         new BodyReadCompletionHandler());
             }
