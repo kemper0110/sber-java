@@ -31,6 +31,8 @@ dependencies {
 
     implementation("org.apache.commons:commons-collections4:4.4")
     implementation("org.apache.commons:commons-text:1.11.0")
+
+    implementation("org.jetbrains:annotations:24.0.0")
 }
 
 tasks.withType<Test> {
