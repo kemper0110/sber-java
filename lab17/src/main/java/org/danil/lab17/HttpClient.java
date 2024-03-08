@@ -42,35 +42,36 @@ public class HttpClient {
         Long rateLimitKbS = null;
     }
 
-    public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler) throws IOException {
+    public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler) {
         fetch(request, handler, Options.builder().build());
     }
 
-    public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> responseHandler, @NotNull Options options) throws IOException {
-        final var socket = AsynchronousSocketChannel.open(asyncChannelGroup.getGroup());
-        final var handler = SimpleCompletionHandler.<Response>builder()
-                .completed(response -> {
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        responseHandler.completed.accept(response);
-                    }
-                })
-                .failed(th -> {
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        responseHandler.failed.accept(th);
-                    }
-                })
-                .build();
-        socket.connect(new InetSocketAddress(request.host(), 80), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
-                        .completed(Void -> {
-                            {
+    public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> responseHandler, @NotNull Options options) {
+        try {
+            // resource closing is managed in complete handler
+            final var socket = AsynchronousSocketChannel.open(asyncChannelGroup.getGroup());
+            final var handler = SimpleCompletionHandler.<Response>builder()
+                    .completed(response -> {
+                        try {
+                            socket.close();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            responseHandler.completed.accept(response);
+                        }
+                    })
+                    .failed(th -> {
+                        try {
+                            socket.close();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } finally {
+                            responseHandler.failed.accept(th);
+                        }
+                    })
+                    .build();
+            socket.connect(new InetSocketAddress(request.host(), 80), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
+                            .completed(Void -> {
                                 final var headers = new HashMap<>() {{
                                     final var defaultHeaders = Map.of(
                                             "Host", request.host(),
@@ -103,35 +104,33 @@ public class HttpClient {
 
                                                                         final var responseHeaders = new HashMap<String, String>(50);
                                                                         String startLine = null;
-                                                                        {
-                                                                            final var lastChars = new CircularFifoQueue<Character>(4);
-                                                                            final var headerEndSequences = List.of(List.of('\r', '\n', '\r', '\n'), List.of('\r', '\r'), List.of('\n', '\n'));
-                                                                            final var lineBuffer = ByteBuffer.allocate(4096);
-                                                                            while (headerBuffer.hasRemaining()) {
-                                                                                final var b = headerBuffer.get();
-                                                                                final var c = (char) b;
-                                                                                lineBuffer.put(b);
-                                                                                lastChars.add(c);
-                                                                                if (c == '\n' || c == '\r') {
-                                                                                    lineBuffer.flip();
-                                                                                    final var line = StandardCharsets.UTF_8.decode(lineBuffer).toString().stripTrailing();
-                                                                                    if (!Objects.equals(line, "")) {
-                                                                                        if (startLine == null) {
-                                                                                            startLine = line;
-                                                                                        } else {
-                                                                                            final var splited = line.split(": ");
-                                                                                            responseHeaders.put(splited[0], splited[1]);
-                                                                                        }
+                                                                        final var lastChars = new CircularFifoQueue<Character>(4);
+                                                                        final var headerEndSequences = List.of(List.of('\r', '\n', '\r', '\n'), List.of('\r', '\r'), List.of('\n', '\n'));
+                                                                        final var lineBuffer = ByteBuffer.allocate(4096);
+                                                                        while (headerBuffer.hasRemaining()) {
+                                                                            final var b = headerBuffer.get();
+                                                                            final var c = (char) b;
+                                                                            lineBuffer.put(b);
+                                                                            lastChars.add(c);
+                                                                            if (c == '\n' || c == '\r') {
+                                                                                lineBuffer.flip();
+                                                                                final var line = StandardCharsets.UTF_8.decode(lineBuffer).toString().stripTrailing();
+                                                                                if (!Objects.equals(line, "")) {
+                                                                                    if (startLine == null) {
+                                                                                        startLine = line;
+                                                                                    } else {
+                                                                                        final var splited = line.split(": ");
+                                                                                        responseHeaders.put(splited[0], splited[1]);
                                                                                     }
-                                                                                    lineBuffer.clear();
                                                                                 }
-                                                                                final var isHeaderEnded = headerEndSequences.stream().anyMatch(headerEnd -> {
-                                                                                    final var window = lastChars.stream().skip(4 - headerEnd.size()).limit(headerEnd.size()).toList();
-//                                                    System.out.format("|%s| window: %s\n", StringEscapeUtils.escapeJava("" + c), StringEscapeUtils.escapeJava(window.toString()));
-                                                                                    return CollectionUtils.isEqualCollection(window, headerEnd);
-                                                                                });
-                                                                                if (isHeaderEnded) break;
+                                                                                lineBuffer.clear();
                                                                             }
+                                                                            final var isHeaderEnded = headerEndSequences.stream().anyMatch(headerEnd -> {
+                                                                                final var window = lastChars.stream().skip(4 - headerEnd.size()).limit(headerEnd.size()).toList();
+//                                                    System.out.format("|%s| window: %s\n", StringEscapeUtils.escapeJava("" + c), StringEscapeUtils.escapeJava(window.toString()));
+                                                                                return CollectionUtils.isEqualCollection(window, headerEnd);
+                                                                            });
+                                                                            if (isHeaderEnded) break;
                                                                         }
 
 //                                        System.out.println(startLine + "\n\n" + responseHeaders);
@@ -172,14 +171,15 @@ public class HttpClient {
                                             handler.failed.accept(th);
                                         })
                                         .build()));
-                            }
-                        })
-                        .failed(th -> {
-                            System.out.println("connect");
-                            handler.failed.accept(th);
-                        })
-                        .build())
-        );
-
+                            })
+                            .failed(th -> {
+                                System.out.println("connect");
+                                handler.failed.accept(th);
+                            })
+                            .build())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
