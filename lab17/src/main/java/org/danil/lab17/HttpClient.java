@@ -42,6 +42,32 @@ public class HttpClient {
         Long rateLimitKbS = null;
     }
 
+    @Builder(toBuilder = true)
+    record BaseContext (@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler, @NotNull Options options) {
+    }
+
+    @Builder(toBuilder = true)
+    record ConnectedContext(@NotNull BaseContext baseContext, AsynchronousSocketChannel socket){
+
+    }
+
+    @Builder(toBuilder = true)
+    record HeaderContext(@NotNull ConnectedContext connectedContext, String startLine, Map<String, String> headers) {
+        BaseContext baseContext() {
+            return connectedContext.baseContext();
+        }
+    }
+
+    @Builder(toBuilder = true)
+    record BodyContext(HeaderContext headerContext, int readCount, int bodyLength, ByteBuffer bodyBuffer, byte[] bodyBytes){
+        BaseContext baseContext() {
+            return headerContext.baseContext();
+        }
+        ConnectedContext connectedContext() {
+            return headerContext.connectedContext();
+        }
+    }
+
     public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> responseHandler, @NotNull Options options) {
         try {
             // resource closing is managed in complete handler
@@ -66,7 +92,9 @@ public class HttpClient {
                         }
                     })
                     .build();
-            socket.connect(new InetSocketAddress(request.host(), 80), null, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
+            final var baseContext = new BaseContext(request, handler, options);
+            final var connectedContext = new ConnectedContext(baseContext, socket);
+            socket.connect(new InetSocketAddress(request.host(), 80), connectedContext, new SimpleCompletionAdapter<>(SimpleCompletionHandler.<Void>builder()
                             .completed(Void -> {
                                 final var headers = new HashMap<>() {{
                                     final var defaultHeaders = Map.of(
@@ -145,15 +173,12 @@ public class HttpClient {
                                                                         System.out.println("start readCount " + readCount);
 
                                                                         socket.read(bodyBuffer,
-                                                                                BodyReadContext.builder()
-                                                                                        .socket(socket)
+                                                                                BodyContext.builder()
+                                                                                        .headerContext(new HeaderContext(connectedContext, startLine, responseHeaders))
                                                                                         .readCount(bodyInHeaderBufferLength)
                                                                                         .bodyLength(length)
                                                                                         .bodyBuffer(bodyBuffer)
                                                                                         .bodyBytes(bodyBytes)
-                                                                                        .startLine(startLine)
-                                                                                        .headers(responseHeaders)
-                                                                                        .handler(handler)
                                                                                         .build(),
                                                                                 new BodyReadCompletionHandler());
                                                                     })
@@ -182,20 +207,11 @@ public class HttpClient {
         }
     }
 
-    @Builder(toBuilder = true)
-    record BodyReadContext(
-            AsynchronousSocketChannel socket,
-            int readCount, int bodyLength, ByteBuffer bodyBuffer, byte[] bodyBytes,
-            String startLine, Map<String, String> headers,
-            SimpleCompletionHandler<Response> handler
-    ){
 
-    }
-
-    static class BodyReadCompletionHandler implements CompletionHandler<Integer, BodyReadContext> {
+    static class BodyReadCompletionHandler implements CompletionHandler<Integer, BodyContext> {
 
         @Override
-        public void completed(Integer readN, BodyReadContext context) {
+        public void completed(Integer readN, BodyContext context) {
             context.bodyBuffer.flip();
             context.bodyBuffer.get(context.bodyBytes, context.readCount, readN);
             context.bodyBuffer.clear();
@@ -204,18 +220,18 @@ public class HttpClient {
             System.out.println("lambda readCount " + readCount2);
 
             if (readCount2 == context.bodyLength) {
-                context.handler.completed.accept(new Response(context.startLine, context.headers, context.bodyBytes));
+                context.baseContext().handler.completed.accept(new Response(context.headerContext().startLine, context.headerContext().headers, context.bodyBytes));
             } else {
-                context.socket.read(context.bodyBuffer,
+                context.connectedContext().socket.read(context.bodyBuffer,
                         context.toBuilder().readCount(readCount2).build(),
                         new BodyReadCompletionHandler());
             }
         }
 
         @Override
-        public void failed(Throwable exc, BodyReadContext context) {
+        public void failed(Throwable exc, BodyContext context) {
             System.out.println("read 1");
-            context.handler.failed.accept(exc);
+            context.baseContext().handler.failed.accept(exc);
         }
     }
 }
