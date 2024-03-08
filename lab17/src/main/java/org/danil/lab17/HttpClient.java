@@ -43,7 +43,7 @@ public class HttpClient {
     }
 
     @Builder(toBuilder = true)
-    record BaseContext(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> handler,
+    record BaseContext(@NotNull Request request, @NotNull CompletionHandler<Response, Object> handler,
                        @NotNull Options options,
                        @NotNull AsynchronousSocketChannel socket) {
     }
@@ -67,34 +67,37 @@ public class HttpClient {
         }
     }
 
-    public void fetch(@NotNull Request request, @NotNull SimpleCompletionHandler<Response> responseHandler, @NotNull Options options) {
+    public void fetch(@NotNull Request request, @NotNull CompletionHandler<Response, Object> responseHandler, @NotNull Options options) {
         try {
             // resource closing is managed in complete handler
             final var socket = AsynchronousSocketChannel.open(asyncChannelGroup.getGroup());
-            final var handler = SimpleCompletionHandler.<Response>builder()
-                    .completed(response -> {
-                        try {
-                            socket.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } finally {
-                            responseHandler.completed.accept(response);
-                        }
-                    })
-                    .failed(th -> {
-                        try {
-                            socket.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } finally {
-                            responseHandler.failed.accept(th);
-                        }
-                    })
-                    .build();
+            final var handler = new CompletionHandler<Response, Object>() {
+                @Override
+                public void completed(Response response, Object attachment) {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        responseHandler.failed(e, attachment);
+                    } finally {
+                        responseHandler.completed(response, attachment);
+                    }
+                }
+
+                @Override
+                public void failed(Throwable exc, Object attachment) {
+                    try {
+                        socket.close();
+                    } catch (IOException e) {
+                        responseHandler.failed(e.initCause(exc), attachment);
+                    } finally {
+                        responseHandler.failed(exc, attachment);
+                    }
+                }
+            };
             final var baseContext = new BaseContext(request, handler, options, socket);
             socket.connect(new InetSocketAddress(request.host(), 80), baseContext, new ConnectedCompletionHandler());
         } catch (Throwable th) {
-            responseHandler.failed.accept(th);
+            responseHandler.failed(th, null);
         }
     }
 
@@ -118,10 +121,10 @@ public class HttpClient {
                     .map((entry) -> entry.getKey() + ": " + entry.getValue())
                     .collect(Collectors.joining("\r\n"));
             final var requestString = """
-                                GET %s HTTP/1.1
-                                %s
-                                                    
-                                """.formatted(context.request.path(), headersString);
+                    GET %s HTTP/1.1
+                    %s
+                                        
+                    """.formatted(context.request.path(), headersString);
             context.socket.write(ByteBuffer.wrap(requestString.getBytes(StandardCharsets.UTF_8)), context, new SendedCompletionHandler());
         }
 
@@ -228,7 +231,7 @@ public class HttpClient {
             System.out.println("lambda readCount " + readCount2);
 
             if (readCount2 == context.bodyLength) {
-                context.baseContext().handler.completed.accept(new Response(context.headerContext().startLine, context.headerContext().headers, context.bodyBytes));
+                context.baseContext().handler.completed(new Response(context.headerContext().startLine, context.headerContext().headers, context.bodyBytes), null);
             } else {
                 context.baseContext().socket.read(context.bodyBuffer,
                         context.toBuilder().readCount(readCount2).build(),
@@ -239,7 +242,7 @@ public class HttpClient {
         @Override
         public void failed(Throwable exc, BodyContext context) {
             System.out.println("read 1");
-            context.baseContext().handler.failed.accept(exc);
+            context.baseContext().handler.failed(exc, null);
         }
     }
 }
