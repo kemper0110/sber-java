@@ -10,7 +10,17 @@ type IndexData = {
 type Receipt = {
     id: number
     name: string
-    ingredients: string[]
+    receiptIngredient: ReceiptIngredient[]
+}
+
+type ReceiptIngredient = {
+    ingredient: Ingredient
+    quantity: number
+}
+
+type Ingredient = {
+    id: number
+    name: string
 }
 
 async function getData({name}: { name: string }): Promise<IndexData> {
@@ -91,9 +101,14 @@ export default async function Home({searchParams}: {
                             </h1>
                             <p className={'grow shrink truncate flex gap-2 flex-wrap'}>
                                 {
-                                    receipt.ingredients.map(ing => (
-                                        <span key={ing} className={'rounded-xl px-2 py-1 bg-slate-200'}>
-                                            {ing}
+                                    receipt.receiptIngredient.map(ing => (
+                                        <span key={ing.ingredient.id} className={'flex gap-1 rounded-xl px-2 py-1 bg-slate-200'}>
+                                            <span>
+                                                {ing.ingredient.name}
+                                            </span>
+                                            <span>
+                                                {ing.quantity}
+                                            </span>
                                         </span>
                                     ))
                                 }

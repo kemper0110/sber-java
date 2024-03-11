@@ -1,9 +1,11 @@
 package org.danil.lab19.service;
 
 import lombok.RequiredArgsConstructor;
-import org.danil.lab19.repository.CrudReceiptRepository;
-import org.danil.lab19.repository.IngredientRepository;
-import org.danil.lab19.repository.ReceiptRepository;
+import org.danil.lab19.dto.IngredientQuantity;
+import org.danil.lab19.model.Receipt;
+import org.danil.lab19.model.ReceiptIngredient;
+import org.danil.lab19.model.ReceiptIngredientId;
+import org.danil.lab19.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,27 +17,39 @@ import java.util.Map;
 public class ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final IngredientRepository ingredientRepository;
-    private final CrudReceiptRepository crudReceiptRepository;
+    private final ReceiptIngredientRepository receiptIngredientRepository;
 
     public Map<String, ?> index(String nameQuery) {
         return Map.of(
-                "receipts", crudReceiptRepository.findAllByNameContaining(nameQuery)
+                "receipts", receiptRepository.findAllByNameContaining(nameQuery)
         );
     }
 
     public Map<String, ?> create() {
         return Map.of(
-                "ingredients", ingredientRepository.getAll()
+                "ingredients", ingredientRepository.findAllProjectedBy()
         );
     }
 
     @Transactional
-    public void store(String receiptName, List<IngredientRepository.IngredientQuantity> ingredients) {
-        final var receiptId = receiptRepository.insert(receiptName);
-        ingredientRepository.insertAll(receiptId.longValue(), ingredients);
+    public void store(String receiptName, List<IngredientQuantity> ingredients) {
+        final var receipt = new Receipt(null, receiptName, null);
+
+        final var receiptIngredients = ingredients.stream()
+                .map(ing -> new ReceiptIngredient(
+                        new ReceiptIngredientId(receipt.getId(), ing.id()),
+                        receipt,
+                        ingredientRepository.getReferenceById(ing.id()),
+                        ing.quantity()
+                ))
+                .toList();
+        receipt.setReceiptIngredient(receiptIngredients);
+
+        receiptRepository.save(receipt);
+        receiptIngredientRepository.saveAll(receiptIngredients);
     }
 
-    public int delete(long id) {
-        return receiptRepository.delete(id);
+    public void delete(long id) {
+        receiptRepository.deleteById(id);
     }
 }

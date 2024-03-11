@@ -1,9 +1,8 @@
 package org.danil.lab19.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.danil.lab19.repository.IngredientRepository;
+import org.danil.lab19.dto.IngredientQuantity;
 import org.danil.lab19.service.ReceiptService;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,17 +25,16 @@ public class ReceiptController {
     }
 
 
-    public record CreateReceiptRequest(String name, List<IngredientRepository.IngredientQuantity> ingredients) {
+    public record CreateReceiptRequest(String name, List<IngredientQuantity> ingredients) {
     }
 
     @PostMapping
-    @Transactional
     void store(@RequestBody CreateReceiptRequest createReceiptRequest) {
         receiptService.store(createReceiptRequest.name(), createReceiptRequest.ingredients());
     }
 
     @DeleteMapping("/{id}")
-    int delete(@PathVariable long id) {
-        return receiptService.delete(id);
+    void delete(@PathVariable long id) {
+        receiptService.delete(id);
     }
 }
