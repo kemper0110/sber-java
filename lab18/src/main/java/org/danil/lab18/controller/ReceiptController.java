@@ -30,7 +30,6 @@ public class ReceiptController {
     }
 
     @PostMapping
-    @Transactional
     void store(@RequestBody CreateReceiptRequest createReceiptRequest) {
         receiptService.store(createReceiptRequest.name(), createReceiptRequest.ingredients());
     }
