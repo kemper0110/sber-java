@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="JpaBuddyIdeaProjectConfig" newRepositoryParent="org.springframework.data.repository.reactive.ReactiveCrudRepository">
+  <component name="JpaBuddyIdeaProjectConfig" newRepositoryParent="org.springframework.data.repository.CrudRepository">
     <option name="defaultUnitInitialized" value="true" />
     <option name="renamerInitialized" value="true" />
+    <option name="reverseEngineeringLastDbConnectionId" value="1c0186bc-64e5-4264-a9e3-489a4a2d127d__postgres_public" />
+    <option name="reLastEntityCreationPackage" value="lab19/src/main/java/org/danil/lab17" />
   </component>
 </project>

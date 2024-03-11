@@ -1,0 +1,15 @@
+spring:
+  flyway:
+    enabled: true
+    user: postgres
+    password: postgres
+    url: jdbc:postgresql://localhost:5432/postgres
+    locations: classpath:db/migration
+    driver-class-name: org.postgresql.Driver
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+    driverClassName: org.postgresql.Driver
+  jpa:
+    show-sql: true
