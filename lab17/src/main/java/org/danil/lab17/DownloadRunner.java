@@ -5,11 +5,15 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.channels.CompletionHandler;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 @RequiredArgsConstructor
@@ -18,20 +22,37 @@ public class DownloadRunner implements CommandLineRunner {
     private final HttpClient httpClient;
     private final Executor executor;
 
+    protected List<HttpClient.Request> readRequests(String filename) throws IOException, URISyntaxException {
+        final var url = getClass().getClassLoader().getResource(filename);
+        Objects.requireNonNull(url);
+        try (final var lines = Files.lines(Paths.get(url.toURI()))) {
+            final var it = lines.iterator();
+            final var header = Arrays.asList(it.next().split("\\s*,\\s*"));
+
+            final var requests = new ArrayList<HttpClient.Request>(10);
+            it.forEachRemaining(line -> {
+                final var splited = line.split("\\s*,\\s*");
+                if (splited.length != header.size())
+                    throw new IllegalArgumentException();
+                requests.add(
+                        HttpClient.Request
+                                .builder(
+                                        splited[header.indexOf("host")],
+                                        Integer.parseInt(splited[header.indexOf("port")]),
+                                        splited[header.indexOf("path")],
+                                        HttpClient.Request.Method.valueOf(splited[header.indexOf("method")])
+                                )
+                                .build()
+                );
+            });
+            return requests;
+        }
+    }
+
     @Override
     public void run(String... args) throws Exception {
 
-
-        final var requests = List.of(
-//                new HttpClient.Request("www.google.ru", "/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png", null)
-//                new HttpClient.Request("www.google.ru", "/logos/doodles/2024/jose-guadalupe-posadas-172nd-birthday-6753651837110182.3-2x.png", null),
-//                new HttpClient.Request("www.gstatic.com", "/marketing-cms/79/f2/7ab8503042a798d9fd32ad440d24/screenshot-2024-02-01-at-3-37-00-pm.png", null)
-//                new HttpClient.Request("redirector.gvt1.com", "/edgedl/android/studio/install/2023.2.1.23/android-studio-2023.2.1.23-windows.exe", null),
-//                new HttpClient.Request("r2---sn-gvnuxaxjvh-gv8l.gvt1.com", "/edgedl/android/studio/install/2023.2.1.23/android-studio-2023.2.1.23-windows.exe?cms_redirect=yes&amp;mh=YU&amp;mip=93.178.109.94&amp;mm=28&amp;mn=sn-gvnuxaxjvh-gv8l&amp;ms=nvh&amp;mt=1709921221&amp;mv=u&amp;mvi=2&amp;pl=22&amp;rmhost=r7---sn-gvnuxaxjvh-gv8l.gvt1.com&amp;shardbypass=sd&amp;smhost=r5---sn-gvnuxaxjvh-gv8z.gvt1.com", null)
-//                new HttpClient.Request("sample-videos.com", "/img/Sample-jpg-image-30mb.jpg", null)
-                HttpClient.Request.builder("lh3.googleusercontent.com", 80, "/9VPwbk2TYb6p0blX5ck39Y_dXPZit_1c7_WDRsRZalw3pvq0VqQRd9aUGx_xIRu_M_AF-vVzNq2rxvAltSn1hnX39dlTxO2WA3WC5JmpoBFQBSb6NV9sQQ=s0", HttpClient.Request.Method.GET).build(),
-                HttpClient.Request.builder("lh3.googleusercontent.com", 80, "/9AZmPgQ5MGCZectYtVjkVngmJ7lFUyhv7gzKRY2PO1UAG9OxEXqf9ew_uhJ5XApoaOaStcDVobFrkB55NW_Da58Ofp7P1qI6bQzDI9inxSL2hC-3fhqa=s0", HttpClient.Request.Method.GET).build()
-        );
+        final var requests = readRequests("downloads.csv");
 
         final var blockingWait = new CountDownLatch(requests.size());
 
@@ -59,7 +80,9 @@ public class DownloadRunner implements CommandLineRunner {
                     System.out.println("Top level error " + th + " " + th.getMessage());
                     blockingWait.countDown();
                 }
-            }, HttpClient.Options.builder().rateLimitKbS(500L).build());
+            },
+                    // выставил ограничение скорости
+                    HttpClient.Options.builder().rateLimitKbS(500L).build());
         }
 
         System.out.println("wating ");
