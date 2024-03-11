@@ -3,6 +3,7 @@ package org.danil.lab17;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MimeType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -64,8 +65,9 @@ public class DownloadRunner implements CommandLineRunner {
             httpClient.fetch(req, new CompletionHandler<>() {
                 @Override
                 public void completed(HttpClient.Response response, Object attachment) {
+                    final var mimeType = MimeType.valueOf(response.headers().get("Content-Type"));
                     try {
-                        Files.write(Paths.get("C:\\Users\\Danil\\Desktop\\image_%d.png".formatted(finalI)),
+                        Files.write(Paths.get("file_%d.%s".formatted(finalI, mimeType.getSubtype())),
                                 response.body(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         System.out.println("done for " + (System.currentTimeMillis() - startTime));
                     } catch (IOException e) {
