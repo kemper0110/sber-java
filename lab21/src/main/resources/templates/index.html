@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Time app</title>
+</head>
+<body>
+<section class="w-full h-screen flex flex-col gap-4 justify-center items-center">
+    <article class="border-2 p-12 rounded-lg shadow-lg">
+        <h1 class="text-5xl font-bold bg-gradient-to-r from-blue-500 via-green-500 to-orange-500 text-transparent bg-clip-text"
+            th:text="${time}">
+            Sat Mar 16 00:32:41 MSK 2024
+        </h1>
+    </article>
+</section>
+</body>
+</html>

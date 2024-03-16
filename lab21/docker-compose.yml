@@ -1,0 +1,9 @@
+services:
+  api:
+    image: lab21-api
+    ports:
+      - "8080:8080"
+  frontend:
+    image: lab21-frontend
+    ports:
+      - "80:80"
