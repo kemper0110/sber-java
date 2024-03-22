@@ -32,5 +32,5 @@
 - Мелкий docker-compose, чтобы локально потестить
 - Запушил образы для [бэкенда](https://hub.docker.com/r/danil1digits0nly/lab21-api) и [фронтенда](https://hub.docker.com/r/danil1digits0nly/lab21-frontend)
 - У фронтенда 2 версии, начальная и канарейка ![img.png](frontend-tags.png)
-- Использовал VK Cloud
+- Использовал VK Cloud ![VK Cloud](vkcloud.png)
 - ... дальше пока ничего ...
