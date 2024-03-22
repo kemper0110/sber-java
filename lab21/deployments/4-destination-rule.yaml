@@ -1,0 +1,17 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: lab21
+  namespace: dev
+spec:
+  host: lab21
+  subsets:
+    - name: v1
+      labels:
+        app: lab21
+        version: v1
+    - name: v2
+      labels:
+        app: lab21
+        version: v2
