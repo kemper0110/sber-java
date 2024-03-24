@@ -4,6 +4,7 @@ FROM node:21-alpine as frontend-build
 RUN npm i -g npm
 WORKDIR /usr/app
 COPY package.json package-lock.json ./
+VOLUME node_modules
 RUN npm i
 COPY . .
 RUN npm run build
