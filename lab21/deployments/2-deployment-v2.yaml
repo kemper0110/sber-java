@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: danil1digits0nly/lab21-frontend:1.4
+          image: danil1digits0nly/lab21-frontend:2
           imagePullPolicy: Always
           env:
             - name: API_URL

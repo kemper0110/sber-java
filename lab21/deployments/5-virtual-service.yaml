@@ -10,6 +10,22 @@ spec:
   gateways:
     - lab21-gateway
   http:
+#    Для роутов с префиксом сервис предопределен
+    - match:
+        - uri:
+            prefix: /v1
+      route:
+        - destination:
+            host: lab21
+            subset: v1
+    - match:
+        - uri:
+            prefix: /v2
+      route:
+        - destination:
+            host: lab21
+            subset: v2
+#     Для всех остальных запросов версия определяется случайно в пропорциях 30/70
     - match:
         - uri:
             prefix: /

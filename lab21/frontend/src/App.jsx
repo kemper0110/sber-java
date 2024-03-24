@@ -15,7 +15,11 @@ function App() {
         loader().then(res => setDate(res))
     }, []);
 
-    const version = 'CANARY 1.4'
+    const versionId = __APP_VERSION__
+    const version = {
+        "v1": "STABLE 1",
+        "v2": "CANARY 2",
+    }[versionId] ?? ("NEW " + versionId)
     return (
         <section className="w-full h-screen flex flex-col gap-4 justify-center items-center bg-slate-900">
             {

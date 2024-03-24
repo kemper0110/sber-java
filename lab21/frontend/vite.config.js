@@ -1,10 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import { viteSingleFile } from "vite-plugin-singlefile"
+
+const app_version = process.env.npm_package_version
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), viteSingleFile()],
+  define: {
+    '__APP_VERSION__': JSON.stringify(app_version)
+  },
+  plugins: [react()],
   server: {
     proxy: {
       "/api": {
@@ -24,5 +28,15 @@ export default defineConfig({
         },
       }
     }
+  },
+  build: {
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        entryFileNames: () => `${app_version}/[name]-[hash].js`,
+        chunkFileNames: () => `${app_version}/[name]-[hash].js`,
+        assetFileNames: () => `${app_version}/[name]-[hash][extname]`,
+      },
+    },
   }
 })
