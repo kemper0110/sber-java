@@ -20,16 +20,12 @@ spec:
         sidecar.istio.io/inject: "true"
     spec:
       containers:
-        - name: api
-          image: danil1digits0nly/lab21-api:1.0
-          ports:
-            - containerPort: 8080
         - name: frontend
           image: danil1digits0nly/lab21-frontend:1.4
           imagePullPolicy: Always
           env:
             - name: API_URL
-              value: http://localhost:8080
+              value: http://lab21-api.dev:8080
           ports:
             - name: http
               containerPort: 80
